@@ -16,11 +16,10 @@ Implementar, em Python, aplicações utilizando o modelo **Cliente/Servidor** co
 - Biblioteca `socket`
 - Biblioteca `threading`
 - Biblioteca `datetime`
-- Codificação UTF-8
 
 ---
 
-## 📁 Estrutura
+## Estrutura
 
 Atividade1/
 
@@ -33,7 +32,16 @@ Atividade1/
 
 ## ▶️ Como executar
 
+### Utilizando Terminal Ubuntu 24.04.1 LTS
+
 ```bash
 python3 server.py  # Executar o código do servidor
 python3 client.py  # Ao mesmo tempo também executar o do cliente
+```
+
+### Utilizando o Prompt de Comando do Windows
+
+```bash
+python server.py  # Executar o código do servidor
+python client.py  # Ao mesmo tempo também executar o do cliente
 ```
