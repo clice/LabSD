@@ -4,5 +4,5 @@ Repositório contendo as atividades de laboratório da disciplina Sistemas Distr
 
 ## 📁 Atividades
 
-- [Atividade 1 - Modelo Cliente/Servidor com Sockets em Python](Atividade1/)
+- [Atividade de Laboratório 1 - Modelo Cliente/Servidor com Sockets em Python](Atividade1/)
 
