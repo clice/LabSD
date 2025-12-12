@@ -7,22 +7,41 @@ Aqui você escolhe qual teste quer fazer:
 
 """
 
-import socket
+import socket  # Biblioteca para comunicação via sockets
+import json    # Biblioteca para manipulação de JSON
 
-HOST = "127.0.0.1"
-PORT = 8000
+
+HOST = "127.0.0.1"  # Localhost
+PORT = 8000         # Mesma porta do servidor para escutar
+dataPayload = 4096  # Tamanho máximo dos dados a serem recebidos
+
 
 def main():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((HOST, PORT))
+    """
+    Função principal do cliente
+    """
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Cria o socket TCP
+    client.connect((HOST, PORT))                                # Conecta ao servidor
+    
+    print(f"[CLIENTE] Escutando em {HOST}:{PORT}")
+    print("----------------------------------------------")
 
-    mensagem = "Olá Mundo Distribuído"  # OU: "HORARIO"
-    client.send(mensagem.encode())
+    message = input("Envie uma mensagem ao servidor: ")  # Lê a mensagem do usuário
+    
+    print(f"[ENVIANDO] {message}")
+    
+    client.sendall(message.encode())  # Envia a mensagem ao servidor
 
-    resposta = client.recv(1024).decode()
-    print("Resposta do servidor:", resposta)
+    data = client.recv(dataPayload).decode()  # Recebe a resposta do servidor
+    
+    print(f"[MENSAGEM RECEBIDA]")
 
-    client.close()
+    message = json.loads(data)  # Converte a resposta de JSON para dicionário
+
+    print("Horario recebido do servidor: ", message["time"])
+    print("Mensagem: ", message["text"])
+
+    client.close()  # Encerra a conexão com o servidor
 
 if __name__ == "__main__":
     main()

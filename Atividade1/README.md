@@ -26,26 +26,3 @@ Atividade1/
 python3 server.py  # Executar o código do servidor
 python3 client.py  # Ao mesmo tempo também executar o do cliente
 ```
-
-
-4. COMO SUBIR NO GITHUB (SIMPLIFICADO)
-	1.	Crie uma pasta:
-
-mkdir socket-projeto
-cd socket-projeto
-
-	2.	Coloque os arquivos:
-
-server.py
-client.py
-
-	3.	Inicie o repositório:
-
-git init
-git add .
-git commit -m "Projeto cliente/servidor socket"
-
-	4.	Crie um repositório no GitHub e depois:
-
-git remote add origin https://github.com/SEU_USUARIO/socket-projeto.git
-git push -u origin main
