@@ -8,12 +8,8 @@ Este servidor:
     •   Responde com a hora atual e a string invertida
 """
 
-import socket     # Biblioteca para comunicação via sockets
-import threading  # Biblioteca para criação de threads
-import json       # Biblioteca para manipulação de JSON
-
-
-from datetime import datetime  # Biblioteca para manipulação de datas e horas
+import socket                  # Biblioteca para comunicação via sockets
+import threading               # Biblioteca para criação de threads
 
 
 HOST = "0.0.0.0"    # Escuta em todas as interfaces
@@ -37,21 +33,17 @@ def handle_client(conn, addr):
         # Se não recebeu nada, encerra a conexão
         if not msg_recv:
             return
+        
+        msg_sent = msg_recv.decode()[::-1]  # Inverte a string recebida
 
-        # Prepara a resposta para enviar ao cliente
-        msg_sent = {
-            "time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),  # Formata a hora atual
-            "text": msg_recv.decode()[::-1]                        # Inverte a string recebida
-        }
-
-        json_str = json.dumps(msg_sent)  # Converte a mensagem para JSON
-
-        conn.sendall(json_str.encode())  # Envia a resposta ao cliente
+        conn.sendall(msg_sent.encode())  # Envia a resposta ao cliente
         
         print(f"[ENVIADO] {addr}")
+        
     except Exception as e:
         # Em caso de erro, exibe a mensagem de erro
         print(f"[ERRO] {addr}: {e}")
+        
     finally:
         # Encerra a conexão com o cliente
         conn.close()

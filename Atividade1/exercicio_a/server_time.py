@@ -4,15 +4,12 @@ Servidor Multithread (server.py)
 Este servidor:
     •   Escuta na porta 8000
     •   Para cada cliente, cria uma thread
-    •   Recebe uma string do cliente
-    •   Responde com a hora atual e a string invertida
+    •   Realiza uma conexão com o cliente
+    •   Responde com a hora atual
 """
 
-import socket     # Biblioteca para comunicação via sockets
-import threading  # Biblioteca para criação de threads
-import json       # Biblioteca para manipulação de JSON
-
-
+import socket                  # Biblioteca para comunicação via sockets
+import threading               # Biblioteca para criação de threads
 from datetime import datetime  # Biblioteca para manipulação de datas e horas
 
 
@@ -30,28 +27,21 @@ def handle_client(conn, addr):
     """
     try:
         # Recebe mensagem do cliente, ele fica esperando chegar dados.
-        msg_recv = conn.recv(dataPayload)
+        _ = conn.recv(dataPayload)
         
         print(f"[RECEBIDO] {addr}")
 
-        # Se não recebeu nada, encerra a conexão
-        if not msg_recv:
-            return
-
         # Prepara a resposta para enviar ao cliente
-        msg_sent = {
-            "time": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),  # Formata a hora atual
-            "text": msg_recv.decode()[::-1]                        # Inverte a string recebida
-        }
+        msg_sent = datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # Formata a hora atual
 
-        json_str = json.dumps(msg_sent)  # Converte a mensagem para JSON
-
-        conn.sendall(json_str.encode())  # Envia a resposta ao cliente
+        conn.sendall(msg_sent.encode())  # Envia a resposta ao cliente
         
         print(f"[ENVIADO] {addr}")
+        
     except Exception as e:
         # Em caso de erro, exibe a mensagem de erro
         print(f"[ERRO] {addr}: {e}")
+        
     finally:
         # Encerra a conexão com o cliente
         conn.close()

@@ -1,6 +1,7 @@
 """
-Cliente TCP (client.py) que se conecta ao servidor (server.py), 
-envia uma mensagem e recebe uma resposta em JSON.
+Cliente (client.py)
+
+
 """
 
 import socket  # Biblioteca para comunicação via sockets

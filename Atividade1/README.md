@@ -1,11 +1,22 @@
-# 🧮 Atividade 1 - Modelo Cliente/Servidor com Sockets em Python
+# 🧮 Atividade de Laboratório 1 - Modelo Cliente/Servidor com Sockets em Python
 
-- O servidor deve atender um único pedido do cliente: Retornar o horário do momento
-solicitado. O cliente deve solicitar o horário ao servidor e encerrar. O servidor deve
-ser multithread.
-- O servidor deve escutar em uma porta específica (ex: 8000). Quando recebe uma
-string, ele a reverte e a envia de volta. O cliente que se conecta ao servidor, envia
-uma string ("Olá Mundo Distribuído") e espera a resposta.
+## Objetivo
+
+Implementar, em Python, aplicações utilizando o modelo **Cliente/Servidor** com comunicação via **sockets TCP**, explorando conceitos como:
+- Comunicação em rede
+- Concorrência com múltiplas threads
+- Definição de protocolo de aplicação
+- Troca de mensagens entre processos distribuídos
+
+---
+
+## Tecnologias Utilizadas
+
+- Python 3.x
+- Biblioteca `socket`
+- Biblioteca `threading`
+- Biblioteca `datetime`
+- Codificação UTF-8
 
 ---
 
