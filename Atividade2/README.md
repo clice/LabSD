@@ -51,7 +51,6 @@ pip install rpyc           # Instalação da biblioteca RPyC
 
     📁 Atividade2/
     │
-    ├── venv/
     ├── client.py
     ├── server.py
     ├── Atividade de Laboratório 2.pdf
