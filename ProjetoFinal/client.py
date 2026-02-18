@@ -14,6 +14,8 @@ Também implementa tolerância a falhas através de:
 import rpyc
 import time
 
+from circuit_breaker import CircuitBreaker
+
 # Configurações do Servidor
 
 SERVER_HOST = "localhost"   # Endereço do servidor
@@ -90,7 +92,9 @@ def main():
     # Conectar ao servidor
     conn = conectar_com_retry()
     if not conn:
-        return
+        return    
+    
+    breaker = CircuitBreaker()  # Instância do Circuit Breaker para chamadas remotas
 
     while True:
         menu()
@@ -99,7 +103,7 @@ def main():
         # Consultar ingressos
         if opcao == "1":
             resposta = chamar_com_retry(
-                conn.root.consultar_ingressos
+                breaker.call(conn.root.consultar_ingressos)
             )
             print("Ingressos disponíveis:", resposta)
 
@@ -109,7 +113,7 @@ def main():
             qtd = int(input("Quantidade: "))
 
             resposta = chamar_com_retry(
-                conn.root.reservar_ingresso,
+                breaker.call(conn.root.reservar_ingresso),
                 nome,
                 qtd
             )
@@ -118,7 +122,7 @@ def main():
         # Status do servidor
         elif opcao == "3":
             status = chamar_com_retry(
-                conn.root.status_servidor
+                breaker.call(conn.root.status_servidor)
             )
 
             if isinstance(status, dict):
