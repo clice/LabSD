@@ -21,12 +21,11 @@ Implementar, em Python, aplicações utilizando o modelo **Cliente/Servidor** co
 
 ## Estrutura
 
-Atividade1/
-
-	├── Atividade de Laboratório 1.pdf
-	├── client.py
-	├── README.md
-	└── server.py
+	Atividade1/
+		├── Atividade de Laboratório 1.pdf
+		├── client.py
+		├── README.md
+		└── server.py
 
 ---
 

@@ -40,7 +40,7 @@ RPyC (Remote Python Call) é uma biblioteca Python que implementa RPC, permitind
 
 ```
 python3 -m venv venv       # Preparação do ambiente virtual
-source venv/bin/activate   # Ativação do ambiente virtual
+source .venv/bin/activate   # Ativação do ambiente virtual
 pip install rpyc           # Instalação da biblioteca RPyC
 
 ```
@@ -50,11 +50,10 @@ pip install rpyc           # Instalação da biblioteca RPyC
 ## 🏗️ Estrutura do Projeto
 
     📁 Atividade2/
-    │
-    ├── client.py
-    ├── server.py
-    ├── Atividade de Laboratório 2.pdf
-    └── README.md
+        ├── client.py
+        ├── server.py
+        ├── Atividade de Laboratório 2.pdf
+        └── README.md
 
 ---
 
