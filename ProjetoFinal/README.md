@@ -158,11 +158,16 @@ python client.py
 
 ## 📂 Estrutura do Projeto
 
-    projeto/
-        ├── server.py
-        ├── client.py
-        ├── name_server.py (opcional)
-        └── README.md
+    ProjetoFinal/
+    ├── server.py
+    ├── database.py
+    ├── name_server.py
+    ├── client_core.py
+    ├── circuit_breaker.py
+    ├── gui.py
+    ├── tickets.db (gerado automaticamente)
+    ├── README.md
+    └── slides.pptx
 
 ---
 
