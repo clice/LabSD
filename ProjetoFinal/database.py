@@ -7,7 +7,7 @@ Camada de Persistência do Sistema Distribuído do Cinema
 - Gerenciar filmes
 - Gerenciar sessões
 - Regisrtar clientes
-- Registrar compraa
+- Registrar compra
 - Controlar estoque de ingressos por sessão
 """
 
@@ -151,26 +151,26 @@ def atualizar_ingressos(sessao_id, nova_quantidade):
 
 # CRUD CLIENTES
 
-def buscar_ou_criar_cliente(nome, email):
+def buscar_ou_criar_cliente(cursor, nome, email):
+    """
+    Busca um cliente pelo email ou cria um novo se não existir.    
+    """
 
-    with conectar() as conn:
-        cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM clientes WHERE email=?",
+        (email,)
+    )
+    resultado = cursor.fetchone()
 
-        cursor.execute(
-            "SELECT id FROM clientes WHERE email=?",
-            (email,)
-        )
-        resultado = cursor.fetchone()
+    if resultado:
+        return resultado[0]
 
-        if resultado:
-            return resultado[0]
+    cursor.execute(
+        "INSERT INTO clientes (nome, email) VALUES (?, ?)",
+        (nome, email)
+    )
 
-        cursor.execute(
-            "INSERT INTO clientes (nome, email) VALUES (?, ?)",
-            (nome, email)
-        )
-
-        return cursor.lastrowid
+    return cursor.lastrowid
 
     
 def consultar_ingressos():
@@ -211,7 +211,7 @@ def comprar_ingresso(nome, email, sessao_id, quantidade):
         if atual < quantidade:
             return "Ingressos insuficientes."
 
-        cliente_id = buscar_ou_criar_cliente(nome, email)
+        cliente_id = buscar_ou_criar_cliente(cursor, nome, email)
 
         novo_total = atual - quantidade
 

@@ -28,98 +28,104 @@ logging.basicConfig(
 )
 
 
-class TicketService(rpyc.Service):
-    # Classe que define os métodos remotos disponíveis aos clientes.
-    # Esta classe representa a Camada de Lógica de Negócio
-    # dentro da arquitetura em N-Camadas.
+class CinemaService(rpyc.Service):
+    """
+    Define métodos remotos disponíveis aos clientes.
+
+    Cada método representa uma operação da lógica de negócio.
+    """
 
     # Lock para garantir exclusão mútua
     lock = threading.Lock()
 
-    def exposed_consultar_ingressos(self):
-        # Consultar ingressos disponíveis
-        # Retorna a quantidade de ingressos disponíveis.
-        # O prefixo 'exposed_' indica que o método pode
-        # ser chamado remotamente via RPC.
-        # Demonstra a conexão via RPC, o acesso a camada de 
-        # persistência e o tratamento de exceções
+    def exposed_listar_filmes(self):
+        """
+        Retorna lista de todos os filmes cadastrados.
+        """
         
         try:
-            quantidade = database.consultar_ingressos()
-            logging.info("Consulta de ingressos realizada.")
-            return quantidade
+            filmes = database.listar_filmes()
+            logging.info("Listagem de filmes realizada.")
+            return filmes
 
         except Exception as e:
-            logging.error(f"Erro ao consultar ingressos: {e}")
+            logging.error(f"Erro ao listar filmes: {e}")
             return "Erro interno no servidor."
     
 
-    def exposed_reservar_ingresso(self, nome_cliente, quantidade):
-        # Realizar a reserva ingresso
-        # Com validação de entrada, exclusão mútua para proteger o recurso compartilhado
-        # estoque de ingressos (persistência) e tratamento de exceções.
-        
-        # Validação de cliente
-        if not isinstance(nome_cliente, str) or not nome_cliente.strip():
-            return "Nome do cliente inválido."
+    def exposed_listar_sessoes(self, filme_id):
+        """
+        Retorna sessões disponíveis para um filme.
+        """
 
-        # Validação de quantidade de ingressos
-        if not isinstance(quantidade, int) or quantidade <= 0:
-            return "Quantidade inválida."
+        if not isinstance(filme_id, int):
+            return "ID do filme inválido."
 
         try:
-            # Garantir que apenas uma reserva seja processada por vez para evitar condições de corrida
-            with TicketService.lock:
+            sessoes = database.listar_sessoes_por_filme(filme_id)
+            logging.info(f"Sessões consultadas para filme {filme_id}.")
+            return sessoes
 
-                sucesso, restante = database.reservar_ingresso(
+        except Exception as e:
+            logging.error(f"Erro ao listar sessões: {e}")
+            return "Erro interno no servidor."
+        
+        
+    def exposed_comprar_ingresso(self, nome_cliente, email, sessao_id, quantidade):
+        """
+        Realiza compra de ingressos.
+
+        Valida os dados, exclusão mútua e persistência transacional
+        """
+        
+
+        if not isinstance(nome_cliente, str) or not nome_cliente.strip():
+            return "Nome inválido."
+
+        if not isinstance(email, str) or not email.strip():
+            return "Email inválido."
+
+        if not isinstance(sessao_id, int):
+            return "Sessão inválida."
+
+        if not isinstance(quantidade, int) or quantidade <= 0:
+            return "Quantidade inválida."
+        
+
+        try:
+            with CinemaService.lock:
+
+                resultado = database.comprar_ingresso(
                     nome_cliente,
+                    email,
+                    sessao_id,
                     quantidade
                 )
 
-                if sucesso:
-                    # Log de reserva bem-sucedida
-                    logging.info(
-                        f"Reserva realizada por {nome_cliente} "
-                        f"({quantidade} ingressos)."
-                    )
+                logging.info(
+                    f"Compra realizada por {nome_cliente} "
+                    f"(Sessão {sessao_id}, Qtd {quantidade})"
+                )
 
-                    return (
-                        f"Reserva confirmada para {nome_cliente}. "
-                        f"Ingressos restantes: {restante}"
-                    )
-                else:
-                    # Log de tentativa de reserva falhada por falta de estoque
-                    logging.warning(
-                        f"Tentativa de reserva falhou "
-                        f"(estoque insuficiente)."
-                    )
-                    return "Ingressos insuficientes."
+                return resultado
 
         except Exception as e:
-            # Log de erro detalhado para facilitar a depuração
-            logging.error(f"Erro ao reservar ingresso: {e}")
+            logging.error(f"Erro ao comprar ingresso: {e}")
             return "Erro interno no servidor."
         
 
 if __name__ == "__main__":
-    # Inicialização do Servidor
-    # Ponto de entrada do servidor.
-    # Utiliza ThreadedServer para permitir múltiplos clientes
-    # simultaneamente (modelo multithread).
-    # Concorrência no servidor e capacidade de atender múltiplos nós
-    
+
     logging.info("===================================")
-    logging.info("Servidor de Reservas iniciado")
+    logging.info("Servidor de Cinema iniciado")
     logging.info("===================================")
 
     try:
-        # Inicializa banco de dados
         database.inicializar_banco()
-        logging.info("Banco de dados inicializado com sucesso.")
+        logging.info("Banco inicializado com sucesso.")
 
-        # Servidor concorrente
         server = ThreadedServer(
-            TicketService,
+            CinemaService,
             port=18861
         )
 
