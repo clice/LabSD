@@ -13,8 +13,28 @@ o servidor distribuído de cinema.
 import rpyc
 
 
-SERVER_HOST = "localhost"
-SERVER_PORT = 18861
+def descobrir_servidor():
+    """
+    Descobre o endereço do servidor de cinema através do Name Server.
+    """
+        
+    try:
+        # Conectar ao Name Server e solicitar o endereço do serviço de cinema
+        conn = rpyc.connect("localhost", 18862)
+
+        endereco = conn.root.lookup("cinema_service")
+
+        conn.close()
+
+        if endereco:
+            return endereco
+
+        print("Serviço não encontrado.")
+        return None
+
+    except Exception as e:
+        print("Erro ao conectar ao Name Server:", e)
+        return None
 
 
 def conectar():
@@ -22,17 +42,31 @@ def conectar():
     Estabelece conexão com servidor RPC.
     """
 
+    endereco = descobrir_servidor()
+
+    if not endereco:
+        return None
+
+    host, port = endereco
+
     try:
-        conn = rpyc.connect(SERVER_HOST, SERVER_PORT)
-        print("Conectado ao servidor.")
+        # Conectar ao servidor de cinema usando o endereço descoberto
+        conn = rpyc.connect(host, port)
+        print("Conectado ao servidor via Name Server.")
         return conn
 
     except Exception as e:
-        print("Erro ao conectar:", e)
+        # Logar o erro para análise posterior, 
+        # mas continuar tentando conexão direta
+        print("Erro ao conectar ao servidor:", e)
         return None
 
 
 def menu():
+    """
+    Exibe menu de opções para o usuário.
+    """
+    
     print("\n===== COMPRA DE INGRESSOS DO CINEMA =====")
     print("1 - Listar Filmes")
     print("2 - Listar Sessões")
@@ -41,8 +75,16 @@ def menu():
 
 
 def listar_filmes(conn):
-
+    """
+    Solicita ao servidor a listagem de filmes.
+    """
+    
     filmes = conn.root.listar_filmes()
+    
+    # Se o resultado for uma string, é uma mensagem de erro
+    if isinstance(filmes, str):
+        print(filmes)
+        return
 
     print("\n--- Filmes Disponíveis ---")
 
@@ -56,6 +98,9 @@ def listar_filmes(conn):
 
 
 def listar_sessoes(conn):
+    """
+    Solicita ao servidor a listagem de sessões para um filme.
+    """
 
     filme_id = int(input("Digite o ID do filme: "))
 
@@ -72,6 +117,9 @@ def listar_sessoes(conn):
 
 
 def comprar_ingresso(conn):
+    """
+    Solicita ao servidor a compra de ingressos.
+    """
 
     nome = input("Nome: ")
     email = input("Email: ")
@@ -89,6 +137,9 @@ def comprar_ingresso(conn):
 
 
 def main():
+    """
+    Função principal do cliente de teste.
+    """
 
     conn = conectar()
 

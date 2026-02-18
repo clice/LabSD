@@ -17,6 +17,10 @@ DB_NAME = "cinema.db"
 
 
 def conectar():
+    """
+    Estabelece conexão com o banco de dados SQLite.
+    """
+    
     return sqlite3.connect(DB_NAME)
 
 
@@ -28,7 +32,7 @@ def inicializar_banco():
     with conectar() as conn:
         cursor = conn.cursor()
 
-        # Filmes
+        # Criar tabela de filmes
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS filmes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +42,7 @@ def inicializar_banco():
             )
         """)
 
-        # Sessões
+        # Criar tabela de sessões
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS sessoes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +53,7 @@ def inicializar_banco():
             )
         """)
 
-        # Clientes
+        # Criar tabela de clientes
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS clientes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +62,7 @@ def inicializar_banco():
             )
         """)
 
-        # Compras
+        # Criar tabela de compras
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS compras (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,6 +83,7 @@ def inserir_dados_iniciais(cursor):
     inserir dados iniciais.
     """
     
+    # Inserir filmes e sessões apenas se o banco estiver vazio
     cursor.execute("SELECT COUNT(*) FROM filmes")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
@@ -89,6 +94,7 @@ def inserir_dados_iniciais(cursor):
             ('Divertida Mente', 'Animação', 102)
         """)
 
+    # Inserir sessões apenas se o banco estiver vazio
     cursor.execute("SELECT COUNT(*) FROM sessoes")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
@@ -100,8 +106,9 @@ def inserir_dados_iniciais(cursor):
             (3, '17:00', 25)
         """)
 
-
-# CRUD FILMES
+"""
+CRUD FILMES
+"""
 
 def listar_filmes():
     with conectar() as conn:
@@ -125,8 +132,9 @@ def inserir_filme(titulo, genero, duracao):
             (titulo, genero, duracao)
         )
 
-
-# CRUD SESSÕES
+"""
+CRUD SESSÕES
+"""
 
 def listar_sessoes_por_filme(filme_id):
     with conectar() as conn:
@@ -148,8 +156,9 @@ def atualizar_ingressos(sessao_id, nova_quantidade):
             WHERE id=?
         """, (nova_quantidade, sessao_id))
 
-
-# CRUD CLIENTES
+"""
+CRUD CLIENTES
+"""
 
 def buscar_ou_criar_cliente(cursor, nome, email):
     """
@@ -187,8 +196,9 @@ def consultar_ingressos():
     conn.close()
     return quantidade
 
-
-# TRANSAÇÃO DE COMPRA
+"""
+CRUD COMPRAS
+"""
 
 def comprar_ingresso(nome, email, sessao_id, quantidade):
 
