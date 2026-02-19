@@ -1,13 +1,18 @@
 """
 name_server.py
 
-Nó de Nomes (Service Discovery) da aplicação distribuída.
+Nó de Nomes (Name Server) da aplicação distribuída.
 
-- Registrar serviços disponíveis
-- Permitir que clientes descubram dinamicamente os serviços
-- Implementar transparência de localização
+Este componente implementa o mecanismo de Service Discovery,
+permitindo que:
 
-Este componente é um nó independente do sistema distribuído.
+- Servidores registrem seus serviços dinamicamente
+- Clientes descubram serviços sem conhecer endereço fixo
+- Seja implementada transparência de localização
+
+Em um Sistema Distribuído, o Name Server desacopla cliente e servidor,
+evitando que o cliente precise saber previamente onde o serviço está
+rodando (IP/porta). É um nó independente do sistema distribuído.
 Ele funciona como um "registro central" de serviços.
 """
 
@@ -18,7 +23,12 @@ import logging
 from config import NAME_SERVER_PORT, LOG_FORMAT
 
 
-# Configuração de logging para monitoramento e depuração
+# ======================================================
+# Configuração de Logging
+# ======================================================
+
+# Permite monitorar registro e consultas de serviços.
+# Fundamental para depuração e observabilidade do sistema.
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
@@ -29,6 +39,7 @@ class NameService(rpyc.Service):
     
     # Registro de serviços
     registry = {}
+    
     
     def exposed_register(self, service_name, host, port):
         """
@@ -56,20 +67,23 @@ class NameService(rpyc.Service):
             logging.info(f"Consulta ao serviço '{service_name}'.")            
             return NameService.registry[service_name]
         
+        # Logar o registro para monitoramento
         logging.warning(f"Serviço '{service_name}' não encontrado.")
         
         return None
-    
+
+
+# ======================================================
+# Inicialização do Name Server
+# ======================================================
 
 if __name__ == "__main__":
 
-	logging.info("")
+	logging.info("==================================")
 	logging.info("Name Server iniciado...")
-	logging.info("")
+	logging.info("==================================")
 
-	server = ThreadedServer(
-		NameService,
-		port=NAME_SERVER_PORT
-	)
+    # Iniciar o servidor de nomes
+	server = ThreadedServer(NameService, port=NAME_SERVER_PORT)
 
 	server.start()

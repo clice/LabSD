@@ -6,21 +6,33 @@ Centraliza portas, endereços, nomes de serviços, banco e outras configuraçõe
 """
 
 
-# Configurações de rede do servidor principal
+# ===============================
+# Servidor principal
+# ===============================
+
 SERVER_HOST = "localhost"
 SERVER_PORT = 18861
 
 
-# Configurações do Name Server 
+# ===============================
+# Name Server
+# ===============================
+
 NAME_SERVER_HOST = "localhost"
 NAME_SERVER_PORT = 18862
 SERVICE_NAME = "cinema_service"
 
 
-# Configurações do banco de dados
+# ===============================
+# Banco de dados
+# ===============================
+
 DB_NAME = "cinema.db"
 
 
-# Configurações de logging
+# ===============================
+# Logging
+# ===============================
+
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 LOG_LEVEL = "INFO"

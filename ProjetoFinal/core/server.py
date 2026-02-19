@@ -1,7 +1,10 @@
 """
 server.py
 
-SErvidor do Sistema Distribuído do Cinema
+Servidor do Sistema Distribuído do Cinema
+
+Este módulo representa a Camada de Lógica de Negócio
+na arquitetura N-Camadas do sistema.
 
 - Comunicação via RPC utilizando RPyC (Middleware)
 - Arquittura N-Camadas (Camada de Negócio)
@@ -11,7 +14,7 @@ SErvidor do Sistema Distribuído do Cinema
 - Tratar falhas internas com logging estruturado
 
 O servidor espões métodos que podem ser chamados remotamente
-pelos clientes como se fossem funções locais.
+pelos clientes como se fossem funções locais (transparência de acesso).
 """
 
 
@@ -20,20 +23,25 @@ from rpyc.utils.server import ThreadedServer
 import threading
 import logging
 
-import database
+from core import database
 from config import ( 
-    SERVER_PORT, 
+    SERVER_HOST, SERVER_PORT, 
     NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME,
     LOG_FORMAT
 )
 
 
-# Configuração de logging para monitoramento e depuração
-logging.basicConfig(
-    level=logging.INFO,
-    format=LOG_FORMAT
-)
+# ======================================================
+# Configuração de Logging
+# ======================================================
 
+# Permite rastrear eventos, erros e operações críticas.
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
+
+# ======================================================
+# Função utilitária para padronizar respostas RPC
+# ======================================================
 
 def response(status, message, data=None):
     """
@@ -45,6 +53,10 @@ def response(status, message, data=None):
         "data": data
     }
 
+
+# ======================================================
+# Serviço RPC
+# ======================================================
 
 class CinemaService(rpyc.Service):
     """
@@ -62,27 +74,15 @@ class CinemaService(rpyc.Service):
         """
         
         try:
-            # Garantir que apenas uma thread acesse o banco de dados por vez
-            
-            filmes = database.listar_filmes()
-            
-            logging.info("Filmes listados com sucesso.")
-            
-            return response(
-                "success", 
-                "Filmes listados com sucesso.",
-                filmes
-            )
+            # Garantir que apenas uma thread acesse o banco de dados por vez            
+            filmes = database.listar_filmes()            
+            logging.info("Filmes listados com sucesso.")            
+            return response("success", "Filmes listados com sucesso.", filmes)
         
         except Exception as e:
-            # Logar o erro para análise posterior
-            
-            logging.error(f"Erro ao listar filmes: {e}")
-            
-            return response(
-                "error",
-                "Erro interno ao listar filmes."
-            )
+            # Logar o erro para análise posterior            
+            logging.error(f"Erro ao listar filmes: {e}")            
+            return response("error", "Erro interno ao listar filmes.")
     
     
     def exposed_listar_sessoes_por_filme(self, filme_id):
@@ -92,33 +92,18 @@ class CinemaService(rpyc.Service):
         
         if not isinstance(filme_id, int):
             # Logar o erro de entrada inválida
-            return response(
-                "error",
-                "ID do filmes inválido."
-            )
+            return response("error", "ID do filmes inválido.")
         
         try:
-            # Garantir que apenas uma thread acesse o banco de dados por vez
-            
-            sessoes = database.listar_sessoes_por_filme(filme_id)
-            
+            # Garantir que apenas uma thread acesse o banco de dados por vez            
+            sessoes = database.listar_sessoes_por_filme(filme_id)            
             logging.info(f"Sessões listadas para filme_id={filme_id}.")
-            
-            return response(
-                "success",
-                "Sessões listadas com sucesso.",
-                sessoes
-            )
+            return response("success", "Sessões listadas com sucesso.", sessoes)
         
         except Exception as e:
-            # Logar o erro para análise posterior
-            
-            logging.error(f"Erro ao listar sessões: {e}")
-            
-            return response(
-                "error",
-                "Erro interno ao listar sessões."
-            )
+            # Logar o erro para análise posterior            
+            logging.error(f"Erro ao listar sessões: {e}")            
+            return response("error", "Erro interno ao listar sessões.")
             
     
     def exposed_comprar_ingresso(self, nome, email, sessao_id, quantidade):
@@ -162,6 +147,10 @@ class CinemaService(rpyc.Service):
             )
             
 
+# ======================================================
+# Registro no Name Server
+# ======================================================
+
 def registrar_no_name_server():
     """
     Registrar o serviço no Name Server para descoberta pelos clientes.
@@ -184,6 +173,10 @@ def registrar_no_name_server():
         # Logar o erro para análise posterior
         logging.error(f"Erro ao registrar no Name Server: {e}")
         
+        
+# ======================================================
+# Inicialização do Servidor
+# ======================================================
 
 if __name__ == "__main__":
     """

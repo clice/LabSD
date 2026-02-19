@@ -3,31 +3,40 @@ database.py
 
 Camada de Persistência do Sistema Distribuído do Cinema
 
-- Estrutura complete do banco
-- Gerenciar filmes
-- Gerenciar sessões
-- Gerenciar clientes
-- Gerenciar compras
+- Estrutura completa do banco
+- Garantir integridade referencial (Foreign Keys)
+- Gerenciar filmes, sessões, clientes e compras
 - Controlar estoque de ingressos por sessão
+- Executar operações transacionais
+
+Arquitetura:
+Esta é a Camada de Persistência na arquitetura N-Camadas.
+Ela NÃO contém lógica de negócio distribuída (isso pertence ao server).
 """
 
 
-import email
 import sqlite3
+from config import DB_NAME
 
 
-DB_NAME = "cinema.db"
-
+# ======================================================
+# Conexão com o banco
+# ======================================================
 
 def conectar():
 	"""
-	Estabelecer conexão com o banco de dados SQLite
-	"""
+    Cria conexão com SQLite e ativa suporte a
+    chaves estrangeiras (Foreign Keys).
+    """
 
 	conn = sqlite3.connect(DB_NAME)
 	conn.execute("PRAGMA foreign_keys = ON")  # Habilitar chaves estrangeiras
-	return 
+	return conn
 
+
+# ======================================================
+# Inicialização do Banco
+# ======================================================
 
 def inicializar_banco():
 	"""
@@ -38,7 +47,7 @@ def inicializar_banco():
 	with conectar() as conn:
 		cursor = conn.cursor()
 
-		# CREATE TABLE FILMES
+		# ---------- CREATE TABLE FILMES ----------
 		cursor.execute("""
             CREATE TABLE IF NOT EXISTS filmes (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +57,7 @@ def inicializar_banco():
 			)
         """)
 
-		# CREATE TABLE SESSOES
+		# ---------- CREATE TABLE SESSOES ----------
 		cursor.execute("""
 			CREATE TABLE IF NOT EXISTS sessoes (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +69,7 @@ def inicializar_banco():
 			)   			
         """)
 
-		# CREATE TABLE CLIENTES
+		# ---------- CREATE TABLE CLIENTES ----------
 		cursor.execute("""
 			CREATE TABLE IF NOT EXISTS clientes (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,7 +78,7 @@ def inicializar_banco():
 				)   			
         """)
 
-		# CREATE TABLE COMPRAS
+		# ---------- CREATE TABLE COMPRAS ----------
 		cursor.execute("""
 			CREATE TABLE IF NOT EXISTS compras (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,12 +93,14 @@ def inicializar_banco():
 
 		inserir_dados_iniciais(cursor)
 
+
 def inserir_dados_iniciais(cursor):
     """
     Inserir dados iniciais no banco de dados
+    apenas se as tabelas estiverem vazias, para evitar duplicações.
     """
     
-    # INSERT INTO TABLE FILMES
+    # ---------- INSERT INTO TABLE FILMES ----------
     cursor.execute("SELECT COUNT(*) FROM filmes")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
@@ -117,7 +128,7 @@ def inserir_dados_iniciais(cursor):
 			('Toy Story', 'Animação/Aventura', 81)
         """)
     
-    # INSERT INTO TABLE SESSOES
+    # ---------- INSERT INTO TABLE SESSOES ----------
     cursor.execute("SELECT COUNT(*) FROM sessoes")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
@@ -144,9 +155,11 @@ def inserir_dados_iniciais(cursor):
 			(19, '2024-03-10 18:00', 100, 100),
 			(20, '2024-03-10 20:00', 100, 100)
         """)
-        
 
-# CRUD FILMES
+
+# ======================================================
+# Consultas ao banco
+# ======================================================
 
 def listar_filmes():
     """
@@ -155,7 +168,7 @@ def listar_filmes():
     
     with conectar() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM filmes")
+        cursor.execute("SELECT id, titulo, genero, duracao FROM filmes")
         return cursor.fetchall()
     
 
@@ -166,11 +179,13 @@ def listar_sessoes_por_filme(filme_id):
     
     with conectar() as conn:    
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM sessoes WHERE filme_id = ?", (filme_id,))
+        cursor.execute("""
+            SELECT id, horario, total_ingressos, ingressos_disponiveis 
+            FROM sessoes 
+            WHERE filme_id = ?
+        """, (filme_id,))
         return cursor.fetchall()
     
-    
-# CRUD CLIENTES
 
 def buscar_ou_criar_cliente(nome, email):
 	"""
@@ -191,7 +206,9 @@ def buscar_ou_criar_cliente(nome, email):
 		return cursor.lastrowid
 
 
-# CRUD COMPRAS
+# ======================================================
+# Compra de Ingressos
+# ======================================================
 
 def comprar_ingresso(nome, email, sessao_id, quantidade):
 	"""
