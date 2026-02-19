@@ -22,10 +22,10 @@ import logging
 
 import database
 from config import ( 
-        SERVER_PORT, 
-        NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME,
-        LOG_FORMAT
-    )
+    SERVER_PORT, 
+    NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME,
+    LOG_FORMAT
+)
 
 
 # Configuração de logging para monitoramento e depuração
