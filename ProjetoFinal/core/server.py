@@ -22,7 +22,7 @@ import logging
 
 import database
 from config import ( 
-        SERVER_HOST, SERVER_PORT, 
+        SERVER_PORT, 
         NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME,
         LOG_FORMAT
     )
@@ -203,7 +203,7 @@ if __name__ == "__main__":
         
         registrar_no_name_server()
         
-        server = ThreadedServer(CinemaService, SERVER_HOST, SERVER_PORT)
+        server = ThreadedServer(CinemaService, port=SERVER_PORT)
         
         logging.info("Servidor aguardando conexões...")
         server.start()
