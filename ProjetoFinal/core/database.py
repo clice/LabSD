@@ -171,7 +171,11 @@ def list_movies():
     
     with connect() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, title, genre, length FROM movies")
+        cursor.execute("""
+            SELECT id, title, genre, length 
+            FROM movies
+            ORDER BY id
+        """)
         return cursor.fetchall()
     
 
@@ -186,6 +190,7 @@ def list_screenings_by_movie(movie_id):
             SELECT id, time, total_tickets, available_tickets 
             FROM screenings 
             WHERE movie_id = ?
+            ORDER BY time
         """, (movie_id,))
         return cursor.fetchall()
     

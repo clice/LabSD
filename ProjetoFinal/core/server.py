@@ -155,12 +155,17 @@ class CinemaService(rpyc.Service):
 def register_in_name_server():
     """
     Registrar o serviço no Name Server para descoberta pelos clientes.
+    Implementa mecanismo de retry e garante
+    que a conexão seja encerrada corretamente, mesmo em caso de falhas.
     """
     
     max_retries = 5
     delay = 1
     
     for attempt in range(1, max_retries + 1):
+        
+        conn = None # Garantir que a conexão seja definida mesmo em caso de falha
+        
         try:
             # Registrar o serviço no Name Server para descoberta pelos clientes
             
@@ -168,19 +173,22 @@ def register_in_name_server():
             conn = rpyc.connect(NAME_SERVER_HOST, NAME_SERVER_PORT)
             
             # Registrar o serviço com nome, host e porta do servidor principal
-            conn.root.register(SERVICE_NAME, SERVER_HOST, SERVER_PORT)
-            
-            conn.close()
+            conn.root.register(SERVICE_NAME, SERVER_HOST, SERVER_PORT)            
             
             logging.info("Servidor registrado no Name Server com sucesso.")
             return True
             
         except Exception as e:
             # Logar o erro para análise posterior
-            logging.warning(f"Tentativa {attempt} de registro falhou. Tentanto novamente...")
+            logging.warning(f"Tentativa {attempt} de registro falhou. Erro: {e}")
             time.sleep(delay)
             
-    logging.error(f"Erro ao registrar no Name Server: {e}")
+        finally:
+            # Garantir que a conexão seja fechada corretamente
+            if conn:
+                conn.close()
+            
+    logging.error(f"Erro ao registrar no Name Server.")
     return False
         
         
@@ -209,7 +217,12 @@ if __name__ == "__main__":
             raise Exception("Falha ao registrar no Name Server. Verifique os logs para detalhes.")
         
         # Iniciar o servidor RPC para atender às requisições dos clientes
-        server = ThreadedServer(CinemaService, port=SERVER_PORT, reuse_addr=True)
+        server = ThreadedServer(
+            CinemaService, 
+            hostname=SERVER_HOST,
+            port=SERVER_PORT, 
+            reuse_addr=True
+        )
         
         logging.info("Servidor aguardando conexões...")
         server.start()
