@@ -40,14 +40,14 @@ class TestCinemaSystem(unittest.TestCase):
 		"""
 
 		cls.core.close()
-
-
+	
+	
 	# ---------------------------------------
     # Teste de Conexão
     # ---------------------------------------
-
+    
     def test_connection(self):
-    	self.assertIsNotNone(self.core.conn)
+        self.assertIsNotNone(self.core.conn)
 
 
     # ---------------------------------------
