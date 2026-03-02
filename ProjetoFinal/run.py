@@ -134,10 +134,10 @@ def main():
         # -------------------------------------------------
         # Iniciar Cliente Test
         # -------------------------------------------------
-        # print("Iniciando Cliente...")
-        # subprocess.run(
-        #     [python_exec, "-m", "client.client_test"]
-        # )
+        print("Iniciando Cliente...")
+        subprocess.run(
+            [python_exec, "-m", "client.client_test"]
+        )
 
     except KeyboardInterrupt:
         print("\nExecução interrompida pelo usuário.")

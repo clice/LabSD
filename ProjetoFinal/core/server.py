@@ -20,6 +20,7 @@ pelos clientes como se fossem funções locais (transparência de acesso).
 
 import rpyc
 from rpyc.utils.server import ThreadedServer
+import time
 import threading
 import logging
 
@@ -96,9 +97,9 @@ class CinemaService(rpyc.Service):
         
         try:
             # Garantir que apenas uma thread acesse o banco de dados por vez            
-            sessoes = database.listar_sessoes_por_filme(filme_id)            
-            logging.info(f"Sessões listadas para filme_id={filme_id}.")
-            return response("success", "Sessões listadas com sucesso.", sessoes)
+            screenings = database.list_screenings_for_movie(movie_id)            
+            logging.info(f"Sessões listadas para filme_id={movie_id}.")
+            return response("success", "Sessões listadas com sucesso.", screenings)
         
         except Exception as e:
             # Logar o erro para análise posterior            
@@ -106,21 +107,21 @@ class CinemaService(rpyc.Service):
             return response("error", "Erro interno ao listar sessões.")
             
     
-    def exposed_comprar_ingresso(self, nome, email, sessao_id, quantidade):
+    def exposed_buy_tickets(self, name, email, screening_id, quantity):
         """
         Processa a compra de ingressos para uma sessão específica.
         """
         
-        if not isinstance(nome, str) or not nome.strip():
+        if not isinstance(name, str) or not name.strip():
             return response("error", "Nome do cliente inválido.")
         
         if not isinstance(email, str) or not email.strip():
             return response("error", "E-mail do cliente inválido.")
         
-        if not isinstance(sessao_id, int):
+        if not isinstance(screening_id, int):
             return response("error", "ID da sessão inválida.")
         
-        if not isinstance(quantidade, int) or quantidade <= 0:
+        if not isinstance(quantity, int) or quantity <= 0:
             return response("error", "Quantidade de ingressos inválida.")
         
         try:
@@ -129,7 +130,7 @@ class CinemaService(rpyc.Service):
             with CinemaService.lock:
                 # Verificar disponibilidade de ingressos antes de processar a compra
                 
-                resultado = database.comprar_ingresso(nome, email, sessao_id, quantidade)
+                resultado = database.buy_tickets(name, email, screening_id, quantity)
                 
                 # Se resultado já for dict padronizado (ideal)
                 if isinstance(resultado, dict):
@@ -151,27 +152,36 @@ class CinemaService(rpyc.Service):
 # Registro no Name Server
 # ======================================================
 
-def registrar_no_name_server():
+def register_in_name_server():
     """
     Registrar o serviço no Name Server para descoberta pelos clientes.
     """
     
-    try:
-        # Registrar o serviço no Name Server para descoberta pelos clientes
-        
-        # Conectar ao Name Server e registrar o serviço        
-        conn = rpyc.connect(NAME_SERVER_HOST, NAME_SERVER_PORT)
-        
-        # Registrar o serviço com nome, host e porta do servidor principal
-        conn.root.register(SERVICE_NAME, SERVER_HOST, SERVER_PORT)
-        
-        conn.close()
-        
-        logging.info("Servidor registrado no Name Server com sucesso.")
-        
-    except Exception as e:
-        # Logar o erro para análise posterior
-        logging.error(f"Erro ao registrar no Name Server: {e}")
+    max_retries = 5
+    delay = 1
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            # Registrar o serviço no Name Server para descoberta pelos clientes
+            
+            # Conectar ao Name Server e registrar o serviço        
+            conn = rpyc.connect(NAME_SERVER_HOST, NAME_SERVER_PORT)
+            
+            # Registrar o serviço com nome, host e porta do servidor principal
+            conn.root.register(SERVICE_NAME, SERVER_HOST, SERVER_PORT)
+            
+            conn.close()
+            
+            logging.info("Servidor registrado no Name Server com sucesso.")
+            return True
+            
+        except Exception as e:
+            # Logar o erro para análise posterior
+            logging.warning(f"Tentativa {attempt} de registro falhou. Tentanto novamente...")
+            time.sleep(delay)
+            
+    logging.error(f"Erro ao registrar no Name Server: {e}")
+    return False
         
         
 # ======================================================
@@ -191,12 +201,15 @@ if __name__ == "__main__":
     try:
         # Inicializar o banco de dados (criar tabelas e inserir dados iniciais)
         
-        database.inicializar_banco()
+        database.start_db()
         logging.info("Banco de dados inicializado com sucesso.")
         
-        registrar_no_name_server()
+        # Registrar o serviço no Name Server para descoberta pelos clientes
+        if not register_in_name_server():
+            raise Exception("Falha ao registrar no Name Server. Verifique os logs para detalhes.")
         
-        server = ThreadedServer(CinemaService, port=SERVER_PORT)
+        # Iniciar o servidor RPC para atender às requisições dos clientes
+        server = ThreadedServer(CinemaService, port=SERVER_PORT, reuse_addr=True)
         
         logging.info("Servidor aguardando conexões...")
         server.start()

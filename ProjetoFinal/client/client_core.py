@@ -17,11 +17,7 @@ garantindo que a interface NÃO precise conhecer:
 
 import rpyc
 import time
-from config import (
-    NAME_SERVER_HOST,
-    NAME_SERVER_PORT,
-    SERVICE_NAME
-)
+from config import NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME
 
 
 class ClientCore:
@@ -54,14 +50,14 @@ class ClientCore:
 
             # Conectar ao Name Server
             ns_conn = rpyc.connect(NAME_SERVER_HOST, NAME_SERVER_PORT)
-            endereco = ns_conn.root.lookup(SERVICE_NAME)
+            address = ns_conn.root.lookup(SERVICE_NAME)
             ns_conn.close()
 
-            if not endereco:
+            if not address:
                 return False
 
             # Conectar ao servidor real
-            host, port = endereco
+            host, port = address
             self.conn = rpyc.connect(host, port)
             return True
 
@@ -90,7 +86,7 @@ class ClientCore:
         implementando tolerância a falhas.
         """
 
-        for tentativa in range(1, self.max_retries + 1):
+        for retry in range(1, self.max_retries + 1):
 
             try:
                 # Se a conexão não existir, tenta conectar
@@ -115,9 +111,9 @@ class ClientCore:
                     self.conn = None
 
                 # Realiza as tentativas de conexão com o servidor
-                if tentativa < self.max_retries:
+                if retry < self.max_retries:
                     print(
-                        f"Falha na tentativa {tentativa}. "
+                        f"Falha na tentativa {retry}. "
                         f"Tentando novamente..."
                     )
                     time.sleep(self.retry_delay)
@@ -134,13 +130,13 @@ class ClientCore:
     # Operações Remotas
     # ==================================================            
             
-    def listar_filmes(self):
-        return self._retry_call("listar_filmes")
+    def list_movies(self):
+        return self._retry_call("list_movies")
     
 
-    def listar_sessoes_por_filme(self, filme_id):
-        return self._retry_call("listar_sessoes_por_filme", filme_id)
+    def list_screenings_for_movie(self, movie_id):
+        return self._retry_call("list_screenings_for_movie", movie_id)
     
 
-    def comprar_ingresso(self, nome, email, sessao_id, quantidade):
-        return self._retry_call("comprar_ingresso", nome, email, sessao_id, quantidade)
+    def buy_tickets(self, nome, email, screening_id, quantity):
+        return self._retry_call("buy_tickets", nome, email, screening_id, quantity)

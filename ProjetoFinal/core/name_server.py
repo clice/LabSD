@@ -65,12 +65,12 @@ class NameService(rpyc.Service):
         """
         
         with NameService.lock:
-            endereco = NameService.registry.get(service_name)
+            address = NameService.registry.get(service_name)
         
         if service_name in NameService.registry:
             # Logar a consulta para monitoramento
             logging.info(f"Consulta ao serviço '{service_name}'.")            
-            return NameService.registry[service_name]
+            return address
         
         # Logar o registro para monitoramento
         logging.warning(f"Serviço '{service_name}' não encontrado.")
@@ -89,6 +89,6 @@ if __name__ == "__main__":
 	logging.info("==================================")
 
     # Iniciar o servidor de nomes
-	server = ThreadedServer(NameService, port=NAME_SERVER_PORT)
+	server = ThreadedServer(NameService, port=NAME_SERVER_PORT, reuse_addr=True)
 
 	server.start()

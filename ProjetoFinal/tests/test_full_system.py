@@ -45,24 +45,24 @@ class TestFullSystem(unittest.TestCase):
     # Testes reais de sistema
     # ---------------------------------------
     
-    def test_listar_filmes(self):
-        resposta = self.core.listar_filmes()
-        self.assertEqual(resposta["status"], "success")
+    def test_list_movies(self):
+        result = self.core.list_movies()
+        self.assertEqual(result["status"], "success")
         
-    def test_comprar_ingresso(self):
-        resposta = self.core.comprar_ingresso("Teste", "teste@email.com", 1, 1)
-        self.assertIn(resposta["status"], ["success", "error"])
+    def test_buy_tickets(self):
+        result = self.core.buy_tickets("Teste", "teste@email.com", 1, 1)
+        self.assertIn(result["status"], ["success", "error"])
         
-    def test_retry_com_servidor_off(self):
+    def test_retry_with_server_down(self):
         
         # Desligar servidor
         self.server.terminate()
         time.sleep(1)
         
         # Tentar listar filmes (deve falhar)
-        resposta = self.core.listar_filmes()
+        result = self.core.list_movies()
         
-        self.assertEqual(resposta["status"], "error")
+        self.assertEqual(result["status"], "error")
         
         
 if __name__ == "__main__":

@@ -29,18 +29,18 @@ def main():
     while True:
 
         menu()
-        opcao = input("Escolha uma opção: ")
+        option = input("Escolha uma opção: ")
 
-        if opcao == "1":
-            listar_filmes(core)
+        if option == "1":
+            list_movies(core)
 
-        elif opcao == "2":
-            listar_sessoes_por_filme(core)
+        elif option == "2":
+            list_screenings_by_movie(core)
 
-        elif opcao == "3":
-            comprar_ingresso(core)
+        elif option == "3":
+            buy_tickets(core)
 
-        elif opcao == "0":
+        elif option == "0":
             print("Encerrando...")
             core.close()
             break
@@ -112,45 +112,45 @@ def print_table(headers, rows):
 # Cada função deve chamar o método correspondente do ClientCore e tratar a resposta
 # ======================================================
 
-def listar_filmes(core):
+def list_movies(core):
     """
     Solicita ao servidor a listagem de filmes.
     """
 
-    resposta = core.listar_filmes()
+    result = core.list_movies()
     
-    if resposta["status"] == "success":
+    if result["status"] == "success":
         # A resposta de sucesso deve conter a lista de filmes no campo "data"
         
-        filmes = resposta["data"]
+        movies = result["data"]
         
         headers = ["ID", "Título", "Gênero", "Duração (min)"]
         
         print("\n--- Filmes Disponíveis ---")
-        print_table(headers, filmes)
+        print_table(headers, movies)
             
     else:
         # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"
         
-        print(resposta["message"])
+        print(result["message"])
 
-def listar_sessoes_por_filme(core):
+def list_screenings_by_movie(core):
     """
     Solicita ao servidor a listagem de sessões para um filme.
     """
 
     try:
-        filme_id = int(input("Digite o ID do filme: "))
+        movie_id = int(input("Digite o ID do filme: "))
     except ValueError:
         print("ID inválido.")
         return
 
-    resposta = core.listar_sessoes_por_filme(filme_id)
+    result = core.list_screenings_by_movie(movie_id)
     
-    if resposta["status"] == "success":
+    if result["status"] == "success":
         # A resposta de sucesso deve conter a lista de sessões no campo "data"
 
-        sessoes = resposta["data"]
+        sessoes = result["data"]
         
         headers = ["Sessão ID", "Horário", "Total", "Disponíveis"]
 
@@ -160,10 +160,10 @@ def listar_sessoes_por_filme(core):
     else:
         # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"
         
-        print(resposta["message"])
+        print(result["message"])
 
 
-def comprar_ingresso(core):
+def buy_tickets(core):
     """
     Solicita ao servidor a compra de ingressos.
     """
@@ -173,19 +173,19 @@ def comprar_ingresso(core):
     sessao_id = int(input("ID da Sessão: "))
     quantidade = int(input("Quantidade: "))
     
-    resposta = core.comprar_ingresso(nome, email, sessao_id, quantidade)
+    result = core.buy_tickets(nome, email, sessao_id, quantidade)
     
-    if resposta["status"] == "success":
+    if result["status"] == "success":
         # Em caso de sucesso, a resposta deve conter os detalhes da compra no campo "data"        
-        compra = resposta["data"]
+        purchase = result["data"]
         
         print("\nCompra realizada com sucesso!")
-        print(f"Ingressos restantes na sessão: {compra['ingressos_disponiveis']}")
+        print(f"Ingressos restantes na sessão: {purchase['available_tickets']}")
         
     else:
         # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"
         
-        print(resposta["message"])
+        print(result["message"])
 
 
 # ======================================================

@@ -6,20 +6,20 @@ class TestDatabase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        database.inicializar_banco()
+        database.start_db()
 
-    def test_listar_filmes(self):
-        filmes = database.listar_filmes()
-        self.assertTrue(len(filmes) > 0)
+    def test_list_movies(self):
+        movies = database.list_movies()
+        self.assertTrue(len(movies) > 0)
 
-    def test_compra_invalida(self):
-        resposta = database.comprar_ingresso(
+    def test_buy_invalid(self):
+        result = database.buy_tickets(
             "Teste",
             "teste@email.com",
             9999,
             1
         )
-        self.assertEqual(resposta["status"], "error")
+        self.assertEqual(result["status"], "error")
 
 
 if __name__ == "__main__":

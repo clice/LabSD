@@ -94,10 +94,10 @@ def start_db():
 				)   			
         """)
 
-		add_data(cursor)
+		add_initial_data(cursor)
 
 
-def add_data(cursor):
+def add_initial_data(cursor):
     """
     Inserir dados iniciais no banco de dados
     apenas se as tabelas estiverem vazias, para evitar duplicações.
@@ -171,11 +171,11 @@ def list_movies():
     
     with connect() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, titulo, genero, duracao FROM filmes")
+        cursor.execute("SELECT id, title, genre, length FROM movies")
         return cursor.fetchall()
     
 
-def list_screenings_for_movie(movie_id):
+def list_screenings_by_movie(movie_id):
     """
     Listar todas as sessões disponíveis para um filme específico.
     """
@@ -210,7 +210,7 @@ def find_client(name, email, cursor):
 # Compra de Ingressos
 # ======================================================
 
-def buy_ticket(name, email, screening_id, quantity):
+def buy_tickets(name, email, screening_id, quantity):
 	"""
 	Realizar a compra de ingressos para uma sessão específica, 
     garantindo que haja ingressos disponíveis e atualizando o estoque.
@@ -257,7 +257,7 @@ def buy_ticket(name, email, screening_id, quantity):
 		""", (total, screening_id))
 
 		cursor.execute("""
-			INSERT INTO compras (cliente_id, sessao_id, quantidade)
+			INSERT INTO purchases (client_id, screening_id, quantity)
 			VALUES (?, ?, ?)
 		""", (client_id, screening_id, quantity))
 
