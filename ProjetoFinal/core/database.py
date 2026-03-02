@@ -23,13 +23,16 @@ from config import DB_NAME
 # Conexão com o banco
 # ======================================================
 
-def conectar():
+def connect():
 	"""
     Cria conexão com SQLite e ativa suporte a
     chaves estrangeiras (Foreign Keys).
     """
 
-	conn = sqlite3.connect(DB_NAME)
+	conn = sqlite3.connect(
+        DB_NAME,
+		check_same_thread=False  # Importante para ThreadedServer
+    )
 	conn.execute("PRAGMA foreign_keys = ON")  # Habilitar chaves estrangeiras
 	return conn
 
@@ -38,73 +41,73 @@ def conectar():
 # Inicialização do Banco
 # ======================================================
 
-def inicializar_banco():
+def start_db():
 	"""
 	Criar todas as tabelas do sistema,
 	caso não tenham sido criadas
 	"""
 
-	with conectar() as conn:
+	with connect() as conn:
 		cursor = conn.cursor()
 
-		# ---------- CREATE TABLE FILMES ----------
+		# ---------- CREATE TABLE MOVIES ----------
 		cursor.execute("""
-            CREATE TABLE IF NOT EXISTS filmes (
+            CREATE TABLE IF NOT EXISTS movies (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				titulo TEXT NOT NULL,
-				genero TEXT,
-				duracao INTEGER
+				title TEXT NOT NULL,
+				genre TEXT,
+				length INTEGER
 			)
         """)
 
-		# ---------- CREATE TABLE SESSOES ----------
+		# ---------- CREATE TABLE SCREENINGS ----------
 		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS sessoes (
+			CREATE TABLE IF NOT EXISTS screenings (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				filme_id INTEGER NOT NULL,
-				horario TEXT,
-				total_ingressos INTEGER NOT NULL,
-				ingressos_disponiveis INTEGER NOT NULL,
-				FOREIGN KEY(filme_id) REFERENCES filmes(id) ON DELETE CASCADE
+				movie_id INTEGER NOT NULL,
+				time TEXT,
+				total_tickets INTEGER NOT NULL,
+				available_tickets INTEGER NOT NULL,
+				FOREIGN KEY(movie_id) REFERENCES movies(id) ON DELETE CASCADE
 			)   			
         """)
 
-		# ---------- CREATE TABLE CLIENTES ----------
+		# ---------- CREATE TABLE CLIENTS ----------
 		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS clientes (
+			CREATE TABLE IF NOT EXISTS clients (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				nome TEXT NOT NULL,
+				name TEXT NOT NULL,
 				email TEXT UNIQUE NOT NULL
 				)   			
         """)
 
-		# ---------- CREATE TABLE COMPRAS ----------
+		# ---------- CREATE TABLE PURCHASES ----------
 		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS compras (
+			CREATE TABLE IF NOT EXISTS purchases (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				cliente_id INTEGER NOT NULL,
-				sessao_id INTEGER NOT NULL,
-				quantidade INTEGER NOT NULL,
+				client_id INTEGER NOT NULL,
+				screening_id INTEGER NOT NULL,
+				quantity INTEGER NOT NULL,
 				timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-				FOREIGN KEY(cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
-				FOREIGN KEY(sessao_id) REFERENCES sessoes(id) ON DELETE CASCADE
+				FOREIGN KEY(client_id) REFERENCES clients(id) ON DELETE CASCADE,
+				FOREIGN KEY(screening_id) REFERENCES screenings(id) ON DELETE CASCADE
 				)   			
         """)
 
-		inserir_dados_iniciais(cursor)
+		add_data(cursor)
 
 
-def inserir_dados_iniciais(cursor):
+def add_data(cursor):
     """
     Inserir dados iniciais no banco de dados
     apenas se as tabelas estiverem vazias, para evitar duplicações.
     """
     
-    # ---------- INSERT INTO TABLE FILMES ----------
-    cursor.execute("SELECT COUNT(*) FROM filmes")
+    # ---------- INSERT INTO TABLE MOVIES ----------
+    cursor.execute("SELECT COUNT(*) FROM movies")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
-            INSERT INTO filmes (titulo, genero, duracao) 
+            INSERT INTO movies (title, genre, length) 
             VALUES
             ('O Poderoso Chefão', 'Crime/Drama', 175),
 			('A Origem', 'Sci-Fi/Thriller', 148),
@@ -128,11 +131,11 @@ def inserir_dados_iniciais(cursor):
 			('Toy Story', 'Animação/Aventura', 81)
         """)
     
-    # ---------- INSERT INTO TABLE SESSOES ----------
-    cursor.execute("SELECT COUNT(*) FROM sessoes")
+    # ---------- INSERT INTO TABLE SCREENINGS ----------
+    cursor.execute("SELECT COUNT(*) FROM screenings")
     if cursor.fetchone()[0] == 0:
         cursor.execute("""
-            INSERT INTO sessoes (filme_id, horario, total_ingressos, ingressos_disponiveis)
+            INSERT INTO screenings (movie_id, time, total_tickets, available_tickets)
             VALUES
             (1, '2024-03-01 19:00', 100, 100),
 			(2, '2024-03-01 21:00', 100, 100),		
@@ -161,74 +164,71 @@ def inserir_dados_iniciais(cursor):
 # Consultas ao banco
 # ======================================================
 
-def listar_filmes():
+def list_movies():
     """
     Listar todos os filmes disponíveis no banco de dados.
     """
     
-    with conectar() as conn:
+    with connect() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT id, titulo, genero, duracao FROM filmes")
         return cursor.fetchall()
     
 
-def listar_sessoes_por_filme(filme_id):
+def list_screenings_for_movie(movie_id):
     """
     Listar todas as sessões disponíveis para um filme específico.
     """
     
-    with conectar() as conn:    
+    with connect() as conn:    
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, horario, total_ingressos, ingressos_disponiveis 
-            FROM sessoes 
-            WHERE filme_id = ?
-        """, (filme_id,))
+            SELECT id, time, total_tickets, available_tickets 
+            FROM screenings 
+            WHERE movie_id = ?
+        """, (movie_id,))
         return cursor.fetchall()
     
 
-def buscar_ou_criar_cliente(nome, email):
+def find_client(name, email, cursor):
 	"""
 	Buscar um cliente pelo email ou criar um novo cliente se não existir.
 	"""
 
-	with conectar() as conn:
-		cursor = conn.cursor()
+	cursor.execute("SELECT id FROM clients WHERE email=?", (email,))
+	result = cursor.fetchone()
 
-		cursor.execute("SELECT id FROM clientes WHERE email=?", (email,))
-		resultado = cursor.fetchone()
+	if result:
+		return result[0]
 
-		if resultado:
-			return resultado[0]
+	cursor.execute("INSERT INTO clients (name, email) VALUES (?, ?)", (name, email))
 
-		cursor.execute("INSERT INTO clientes (nome, email) VALUES (?, ?)", (nome, email))
-
-		return cursor.lastrowid
+	return cursor.lastrowid
 
 
 # ======================================================
 # Compra de Ingressos
 # ======================================================
 
-def comprar_ingresso(nome, email, sessao_id, quantidade):
+def buy_ticket(name, email, screening_id, quantity):
 	"""
 	Realizar a compra de ingressos para uma sessão específica, 
     garantindo que haja ingressos disponíveis e atualizando o estoque.
 	"""
 
-	with conectar() as conn:
+	with connect() as conn:
 		cursor = conn.cursor()
 
 		cursor.execute("""
-			SELECT ingressos_disponiveis
-			FROM sessoes
+			SELECT available_tickets
+			FROM screenings
 			WHERE id=?
-		""", (sessao_id,))
+		""", (screening_id,))
 
 		# Verificar se a sessão existe e obter a quantidade de ingressos disponíveis
-		resultado = cursor.fetchone()
+		result = cursor.fetchone()
 
-		if not resultado:
+		if not result:
 			return {
 				"status": "error",
 				"message": "Sessão não encontrada.",
@@ -236,9 +236,9 @@ def comprar_ingresso(nome, email, sessao_id, quantidade):
 			}
 
 		# Verificar se há ingressos suficientes disponíveis
-		atual = resultado[0]
+		current = result[0]
 
-		if atual < quantidade:
+		if current < quantity:
 			return {
 				"status": "error",
 				"message": "Quantidade de ingressos insuficiente.",
@@ -246,24 +246,24 @@ def comprar_ingresso(nome, email, sessao_id, quantidade):
 			}
 
 		# Buscar ou criar cliente
-		cliente_id = buscar_ou_criar_cliente(nome, email)
+		client_id = find_client(name, email, cursor)
 
-		novo_total = atual - quantidade
+		total = current - quantity
 
 		cursor.execute("""
-			UPDATE sessoes
-			SET ingressos_disponiveis=?
+			UPDATE screenings
+			SET available_tickets=?
 			WHERE id=?
-		""", (novo_total, sessao_id))
+		""", (total, screening_id))
 
 		cursor.execute("""
 			INSERT INTO compras (cliente_id, sessao_id, quantidade)
 			VALUES (?, ?, ?)
-		""", (cliente_id, sessao_id, quantidade))
+		""", (client_id, screening_id, quantity))
 
 		# Commit automático ao sair do bloco with
 		return {
 			"status": "success",
 			"message": "Compra realizada com sucesso.",
-			"data": {"restante": novo_total}
+			"data": {"restante": total}
 		}

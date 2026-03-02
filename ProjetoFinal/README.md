@@ -1,10 +1,11 @@
-# 🎟️ Sistema Distribuído de Reservas de Ingressos
+# 🎟️ Sistema Distribuído de Compras de Ingressos
 
 Projeto desenvolvido para a disciplina de **Sistemas Distribuídos**.
 
 ## 📖 Objetivo
 
-Desenvolver uma aplicação distribuída completa que demonstre:
+
+Implementa uma aplicação distribuída para compra de ingressos de cinema, utilizando RPC, arquitetura em camadas, persistência durável e mecanismos de tolerância a falhas. Demonstrando:
 
 - Comunicação entre múltiplos nós
 - Gerenciamento de estado compartilhado
@@ -18,11 +19,17 @@ Desenvolver uma aplicação distribuída completa que demonstre:
 
 A aplicação segue o modelo **N-Camadas**:
 
-    Cliente (UI)
-         ↓ RPC
-    Servidor (Lógica de Negócio)
-                ↓
-    Persistência (Estado compartilhado / Banco)
+O sistema é dividido em componentes independentes:
+
+    Cliente (client_test)  
+                ⬇  
+    ClientCore (abstração RPC + Retry)  
+                ⬇  
+    Name Server (Descoberta de Serviço)  
+                ⬇  
+    Servidor RPC (Lógica de Negócio)  
+                ⬇  
+    SQLite (Persistência)
 
 ### 🔹 Camada de Apresentação (Cliente)
 - Interface em terminal

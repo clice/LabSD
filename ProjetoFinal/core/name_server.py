@@ -20,6 +20,7 @@ Ele funciona como um "registro central" de serviços.
 import rpyc
 from rpyc.utils.server import ThreadedServer
 import logging
+import threading
 from config import NAME_SERVER_PORT, LOG_FORMAT
 
 
@@ -39,14 +40,15 @@ class NameService(rpyc.Service):
     
     # Registro de serviços
     registry = {}
-    
+    lock = threading.Lock()  # Para proteger acesso concorrente ao registro
     
     def exposed_register(self, service_name, host, port):
         """
         Permite que um servidor registre seu endereço.
         """
 
-        NameService.registry[service_name] = (host, port)
+        with NameService.lock:
+            NameService.registry[service_name] = (host, port)
 
         # Logar o registro para monitoramento
         logging.info(f"Serviço '{service_name}' registrado em {host}:{port}")
@@ -61,6 +63,9 @@ class NameService(rpyc.Service):
         """
         Permite que o cliente descubra o endereco de servico.
         """
+        
+        with NameService.lock:
+            endereco = NameService.registry.get(service_name)
         
         if service_name in NameService.registry:
             # Logar a consulta para monitoramento

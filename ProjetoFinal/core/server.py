@@ -68,16 +68,16 @@ class CinemaService(rpyc.Service):
     lock = threading.Lock()
     
     
-    def exposed_listar_filmes(self):
+    def exposed_list_movies(self):
         """
         Retorna lista de todos os filmes cadastrados.
         """
         
         try:
             # Garantir que apenas uma thread acesse o banco de dados por vez            
-            filmes = database.listar_filmes()            
+            movies = database.list_movies()            
             logging.info("Filmes listados com sucesso.")            
-            return response("success", "Filmes listados com sucesso.", filmes)
+            return response("success", "Filmes listados com sucesso.", movies)
         
         except Exception as e:
             # Logar o erro para análise posterior            
@@ -85,14 +85,14 @@ class CinemaService(rpyc.Service):
             return response("error", "Erro interno ao listar filmes.")
     
     
-    def exposed_listar_sessoes_por_filme(self, filme_id):
+    def exposed_list_screenings_for_movie(self, movie_id):
         """
         Retorna lista de sessões disponíveis para um filme específico.
         """
         
-        if not isinstance(filme_id, int):
+        if not isinstance(movie_id, int):
             # Logar o erro de entrada inválida
-            return response("error", "ID do filmes inválido.")
+            return response("error", "ID do filme inválido.")
         
         try:
             # Garantir que apenas uma thread acesse o banco de dados por vez            
