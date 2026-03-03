@@ -21,9 +21,16 @@ Vantagens:
 - Estrutura profissional para apresentação
 """
 
+import sys
+import os
+
+# Adiciona a raiz do projeto ao PYTHONPATH
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+
+
 import subprocess
 import time
-import sys
 import socket
 
 # Importa portas diretamente do config
@@ -136,7 +143,7 @@ def main():
         # -------------------------------------------------
         print("Iniciando Cliente...")
         subprocess.run(
-            [python_exec, "-m", "client.client_test"]
+            [python_exec, "-m", "client.cli"]
         )
 
     except KeyboardInterrupt:

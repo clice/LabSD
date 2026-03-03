@@ -1,8 +1,22 @@
+"""
+test_concurrency.py
+
+Testa comportamento sob múltiplas threads.
+
+Objetivo:
+Validar se o lock no servidor impede
+inconsistência de estoque.
+"""
+
 import threading
 from client.client_core import ClientCore
 
 
 def buy_ticket_thread(results, index):
+    """
+    Função executada por cada thread.
+    """
+    
     core = ClientCore()
     core.connect()
 
@@ -17,7 +31,11 @@ def buy_ticket_thread(results, index):
     core.close()
 
 
-def test_concurrent_buy():
+def test_concurrent_buy_tickets():
+    """
+    Cria múltiplas threads comprando simultaneamente.
+    """
+    
     threads = []
     results = []
 

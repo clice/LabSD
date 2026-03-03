@@ -14,23 +14,26 @@ Esta é a Camada de Persistência na arquitetura N-Camadas.
 Ela NÃO contém lógica de negócio distribuída (isso pertence ao server).
 """
 
-
+import os
 import sqlite3
 from config import DB_NAME
+
+
+DB_PATH = os.getenv("CINEMA_DB", DB_NAME)
 
 
 # ======================================================
 # Conexão com o banco
 # ======================================================
 
-def connect():
+def connect(db_path=DB_PATH):
 	"""
     Cria conexão com SQLite e ativa suporte a
     chaves estrangeiras (Foreign Keys).
     """
 
 	conn = sqlite3.connect(
-        DB_NAME,
+        db_path,
 		check_same_thread=False  # Importante para ThreadedServer
     )
 	conn.execute("PRAGMA foreign_keys = ON")  # Habilitar chaves estrangeiras

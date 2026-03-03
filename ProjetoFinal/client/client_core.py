@@ -18,6 +18,7 @@ garantindo que a interface NÃO precise conhecer:
 import rpyc
 import time
 from config import NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME
+from client.circuit_breaker import CircuitBreaker
 
 
 class ClientCore:
@@ -31,6 +32,12 @@ class ClientCore:
         # Configurações de Retry
         self.max_retries = 3
         self.retry_delay = 1  # segundos
+        
+        # 
+        self.breaker = CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=5
+        )
         
     
     # ==================================================
@@ -94,21 +101,39 @@ class ClientCore:
 
     def _retry_call(self, method_name, *args):
         """
-        Executa chamada RPC com mecanismo de retry,
-        implementando tolerância a falhas.
+        Executa chamada RPC combinando retry automático e Circuit Breaker,
+        implementando tolerância a falhas, verificando o estado do circuito,
+        executando chamadas com retry e depois atualizando o estado do circuito.
         """
+        
+        # Verifica o estado do circuito
+        try:
+            # Verifica se o circuito permite chamada
+            self.breaker.before_call()
+            
+        except Exception as e:
+            # Circuito aberto -> bloqueia imediatamente
+            return {
+                "status": "erro",
+                "message": str(e),
+                "data": None
+            }
 
+        # Executa retry apenas se circuito permitir
         for retry in range(1, self.max_retries + 1):
 
             try:
                 # Se a conexão não existir, tenta conectar
                 if not self.conn:
                     if not self.connect():
-                        raise Exception("Falha ao conectar")
+                        raise Exception("Falha ao conectar ao servidor")
 
                 # Recuperar método dinamicamente
                 method = getattr(self.conn.root, method_name)
                 result = method(*args)
+                
+                # Se chegou aqui, circuito foi bem sucedido
+                self.breaker.on_success()
 
                 # Forçar materialização simples sem pickle
                 if isinstance(result, dict):
@@ -130,8 +155,12 @@ class ClientCore:
 
                 # Realiza as tentativas de conexão com o servidor
                 if retry < self.max_retries:
+                    # Aguarda antes de nova tentativa
                     time.sleep(self.retry_delay)
                 else:
+                    # Falha definitiva, registra falha
+                    self.breaker.on_failure()
+                    
                     return {
                         "status": "error",
                         "message": "Servidor indisponível após múltiplas tentativas.",
@@ -147,8 +176,8 @@ class ClientCore:
         return self._retry_call("list_movies")
     
 
-    def list_screenings_for_movie(self, movie_id):
-        return self._retry_call("list_screenings_for_movie", movie_id)
+    def list_screenings_by_movie(self, movie_id):
+        return self._retry_call("list_screenings_by_movie", movie_id)
     
 
     def buy_tickets(self, nome, email, screening_id, quantity):

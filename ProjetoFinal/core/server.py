@@ -90,7 +90,7 @@ class CinemaService(rpyc.Service):
             return response("error", "Erro interno ao listar filmes.")
     
     
-    def exposed_list_screenings_for_movie(self, movie_id):
+    def exposed_list_screenings_by_movie(self, movie_id):
         """
         Retorna lista de sessões disponíveis para um filme específico.
         """
@@ -101,7 +101,7 @@ class CinemaService(rpyc.Service):
         
         try:
             # Garantir que apenas uma thread acesse o banco de dados por vez            
-            screenings = database.list_screenings_for_movie(movie_id)            
+            screenings = database.list_screenings_by_movie(movie_id)            
             logger.info(f"Sessões listadas para filme_id={movie_id}.")
             return response("success", "Sessões listadas com sucesso.", screenings)
         
