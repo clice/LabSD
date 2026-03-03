@@ -270,5 +270,5 @@ def buy_tickets(name, email, screening_id, quantity):
 		return {
 			"status": "success",
 			"message": "Compra realizada com sucesso.",
-			"data": {"restante": total}
+			"data": {"available_tickets": total}
 		}

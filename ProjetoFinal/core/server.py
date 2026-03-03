@@ -69,6 +69,10 @@ class CinemaService(rpyc.Service):
     lock = threading.Lock()
     
     
+    def on_connect(self, conn):
+        conn._config["allow_pickle"] = False
+    
+    
     def exposed_list_movies(self):
         """
         Retorna lista de todos os filmes cadastrados.
@@ -224,7 +228,12 @@ if __name__ == "__main__":
             CinemaService, 
             hostname=SERVER_HOST,
             port=SERVER_PORT, 
-            reuse_addr=True
+            reuse_addr=True,
+            protocol_config={
+                "allow_public_attrs": True,
+                "allow_pickle": False,
+                "sync_request_timeout": None
+            }
         )
         
         logger.info("Servidor aguardando conexões...")

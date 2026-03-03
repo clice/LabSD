@@ -1,3 +1,4 @@
 rpyc
+pytest
 coverage
 colorama

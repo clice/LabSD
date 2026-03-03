@@ -108,8 +108,13 @@ class ClientCore:
 
                 # Recuperar método dinamicamente
                 method = getattr(self.conn.root, method_name)
+                result = method(*args)
 
-                return method(*args)
+                # Forçar materialização simples sem pickle
+                if isinstance(result, dict):
+                    return {k: v for k, v in result.items()}
+
+                return result
 
             except Exception as e:
                 print(f"Falha na tentativa {retry}. Erro: {e}")
