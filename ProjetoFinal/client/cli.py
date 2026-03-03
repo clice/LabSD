@@ -186,7 +186,7 @@ def menu():
     
 def main():
     """
-    Função principal do .
+    Função principal do cli.
     """
     
     core = ClientCore()
