@@ -1,200 +1,241 @@
-# 🎟️ Sistema Distribuído de Compras de Ingressos
+# Sistema Distribuído de Compras de Ingressos
 
-Projeto desenvolvido para a disciplina de **Sistemas Distribuídos**.
+Projeto final desenvolvido para a disciplina de **Sistemas Distribuídos**.
 
-## 📖 Objetivo
+## Descrição do Projeto
 
 
-Implementa uma aplicação distribuída para compra de ingressos de cinema, utilizando RPC, arquitetura em camadas, persistência durável e mecanismos de tolerância a falhas. Demonstrando:
+Este projeto implementa um sistema distribuído cliente-servidor para simulação de compra de ingressos de cinema.
 
-- Comunicação entre múltiplos nós
-- Gerenciamento de estado compartilhado
-- Aplicação de transparências (acesso, localização e falhas)
-- Concorrência no servidor
-- Uso de RPC como middleware
+O sistema permite que múltiplos clientes consultem filmes disponíveis e realizem compras simultaneamente, garantindo:
 
----
+- Comunicação remota via RPC
+- Descoberta de serviços via Name Server
+- Controle de concorrência
+- Tolerância a falhas
+- Testes automatizados
+- Interface CLI e GUI
 
-## 🏗️ Arquitetura do Sistema
+O objetivo é aplicar conceitos fundamentais de Sistemas Distribuídos, como:
 
-A aplicação segue o modelo **N-Camadas**:
-
-O sistema é dividido em componentes independentes:
-
-    Cliente (client_test)  
-                ⬇  
-    ClientCore (abstração RPC + Retry)  
-                ⬇  
-    Name Server (Descoberta de Serviço)  
-                ⬇  
-    Servidor RPC (Lógica de Negócio)  
-                ⬇  
-    SQLite (Persistência)
-
-### 🔹 Camada de Apresentação (Cliente)
-- Interface em terminal
-- Não gerencia sockets diretamente
-- Comunicação via RPC (RPyC)
-
-### 🔹 Camada de Negócio (Servidor)
-- Processa reservas
-- Controla concorrência
-- Gerencia estado compartilhado
-
-### 🔹 Camada de Persistência
-- Estado mantido em memória (quantidade de ingressos disponíveis)
+- Comunicação remota
+- Descoberta de serviços
+- Sincronização
+- Resiliência
+- Tratamento de falhas
 
 ---
 
-## 📡 Comunicação e Middleware
+## Estrutura do Projeto
 
-O sistema utiliza **RPC (Remote Procedure Call)** por meio da biblioteca:
-
-👉 `RPyC (Remote Python Call)`
-
-O cliente realiza chamadas remotas como se fossem funções locais:
-
-```python
-conn.root.reservar_ingresso("Cliente", 2)
-```
-
-Sem necessidade de manipular sockets diretamente.
-
----
-
-## 🔐 Concorrência e Sincronização
-
-O servidor é multithreaded, permitindo múltiplos clientes simultaneamente.
-
-Para evitar condições de corrida no recurso compartilhado (ingressos), foi utilizada:
-
-```python
-threading.Lock()
-```
-
-Isso garante exclusão mútua durante as operações de reserva.
-
----
-
-## 🌍 Transparências Implementadas
-
-✔ Transparência de Acesso
-
-O cliente chama métodos remotos como se fossem locais.
-
-✔ Transparência de Localização (quando implementado o Nó de Nomes)
-
-O cliente descobre dinamicamente o servidor.
-
-✔ Transparência de Falhas (quando implementado retry/circuit breaker)
-
-O cliente trata falhas automaticamente.
+    ProjetoFinal/
+    │
+    ├── client/
+    │   ├── client_core.py
+    │   ├── circuit_breaker.py
+    │   └── cli.py
+    │
+    ├── core/
+    │   ├── server.py
+    │   ├── name_server.py
+    │   └── database.py
+    │
+    ├── data/
+    │   └── ...
+    │
+    ├── docs/
+    │   └── ...
+    │
+    ├── gui/
+    │   └── ...
+    │
+    ├── scripts/
+    │   ├── run.py
+    │   ├── run_gui.py
+    │   └── run_tests.py
+    │
+    ├── tests/
+    │   ├── conftest.py
+    │   ├── test_concurrency.py
+    │   ├── test_failure.py
+    │   └── test_integration.py
+    │
+    ├── config.py
+    └── requirements.txt
 
 ---
 
-## ⚙️ Requisitos
+## Como Executar o Projeto
 
- - Python 3.8+
- - RPyC
+### Instalar dependências
 
----
-
-## 📦 Instalação
-
-### 🔹 1. Clone o repositório
-
-```bash
-git clone https://github.com/seu-usuario/nome-do-repo.git
-cd nome-do-repo
-```
-
-### 🔹 2. Criar ambiente virtual (Recomendado)
-
-Linux/Mac:
+* Linux/Mac:
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Windows:
+* Windows:
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### 🔹 3. Instalar dependências
+### Executar projeto
+
+Existem duas formar de executar o projeto:
+
+- Executar via CLI
 
 ```bash
-pip install rpyc
+# Linux/Mac:
+python3 scripts/run.py
+
+# Windows
+python scripts/run.py
 ```
 
----
-
-## ▶️ Como Executar
-
-### 🔹 1. Iniciar o Servidor
+- Executar via GUI
 
 ```bash
-python server.py
-```
+# Linux/Mac:
+python3 scripts/run_gui.py
 
-Saída esperada:
-
-```bash
-Servidor de Ingressos iniciado...
-```
-
-### 🔹 2. Executar o Cliente
-
-```bash
-python client.py
+# Windows
+python scripts/run_gui.py
 ```
 
 ---
 
-## 🧪 Testes
+## Tecnologias Utilizadas
 
- - Execute múltiplos clientes simultaneamente.
- - Tente reservar mais ingressos do que o disponível.
- - Observe o comportamento concorrente.
- - Teste falhas interrompendo o servidor.
-
----
-
-## 📂 Estrutura do Projeto
-
-    ProjetoFinal/
-    ├── server.py
-    ├── database.py
-    ├── name_server.py
-    ├── client_core.py
-    ├── circuit_breaker.py
-    ├── gui.py
-    ├── tickets.db (gerado automaticamente)
-    ├── README.md
-    └── slides.pptx
+- Python 3.x
+- RPyC
+- Pytest
+- Threading
+- Tkinter (GUI)
 
 ---
 
-## 🚀 Funcionalidades
+## Arquitetura do Sistema
 
- - Consultar ingressos disponíveis
- - Reservar ingressos
- - Ver status do servidor
- - Controle de concorrência
- - Comunicação RPC
+O sistema é composto pelos seguintes componentes:
+
+### Name Server
+
+Responsável por registrar e fornecer a localização do servidor para os clientes.
+
+- Permite desacoplamento entre cliente e servidor
+- Facilita escalabilidade futura
+- Evita dependência de endereço fixo
+
+Arquivo: `core/name_server.py`
+
+### Servidor
+
+Responsável por:
+
+- Gerenciar os filmes disponíveis
+- Processar compras
+- Controlar concorrência
+- Garantir consistência dos dados
+- Responder requisições remotas via RPC
+
+Arquivo: `core/server.py`
+
+### Banco de Dados (Em Memória)
+
+Simula um banco de dados para armazenar:
+
+- Lista de filmes
+- Quantidade de ingressos disponíveis
+- Histórico de compras
+
+Arquivo: `core/database.py`
+
+### Cliente
+
+Responsável por:
+
+- Consultar o Name Server
+- Conectar-se ao servidor
+- Realizar requisições remotas
+- Interagir com o usuário
+
+Componentes:
+
+- CLI: `client/cli.py`
+- Núcleo do cliente: `client/client_core.py`
+- Interface gráfica: `gui/`
 
 ---
 
-## 🎓 Conceitos de Sistemas Distribuídos Aplicados
+## Componentes do Sistema
 
- - RPC / Middleware
- - Arquitetura em N-Camadas
- - Concorrência
- - Exclusão Mútua
- - Estado Compartilhado
- - Transparência de Acesso
- - Transparência de Falhas
- - Descoberta de Serviço (opcional)
+### Name Server
+Responsável por registrar e fornecer a localização dos serviços disponíveis.
+
+Arquivo: `core/name_server.py`
+
+### Servidor
+Responsável por:
+- Gerenciar filmes
+- Processar compras
+- Controlar concorrência
+- Persistir dados
+
+Arquivo: `core/server.py`
+
+### Banco de Dados
+Simulação de banco em memória para armazenar:
+- Filmes
+- Ingressos disponíveis
+- Compras realizadas
+
+Arquivo: `core/database.py`
+
+### Cliente
+- Interface CLI (`client/cli.py`)
+- Interface gráfica (`gui/`)
+- Comunicação com servidor via RPC
+
+### Circuit Breaker
+Implementado para tolerância a falhas.
+Arquivo: `client/circuit_breaker.py`
+
+---
+
+## Comunicação e Middleware
+
+O sistema utiliza **RPC (Remote Procedure Call)** por meio da biblioteca `RPyC (Remote Python Call)` no Python. O cliente realiza chamadas remotas pelo como se fossem funções locais, sem a necessidade de manipular sockets diretamente e consulta o Name Server antes de se conectar ao servidos.
+
+---
+
+## Concorrência e Sincronização
+
+O servidor é multithreaded, permitindo múltiplos clientes simultaneamente. Para evitar condições de corrida no recurso compartilhado (ingressos). Foi utilizada o lock threading, o que garante exclusão mútua durante as operações de reserva e previne venda duplicada.
+
+---
+
+## Tolerância a Falhas
+
+Para garantir resiliência em ambiente distribuído, foi implementado o padrão Circuit Breaker no cliente.
+
+O Circuit Breaker impede que o cliente continue realizando chamadas remotas quando o servidor apresenta falhas consecutivas, evitando sobrecarga e melhorando a estabilidade do sistema.
+
+O mecanismo opera com três estados:
+
+- **Closed**: funcionamento normal
+- **Open**: bloqueio temporário de requisições após número limite de falhas
+- **Half-Open**: estado intermediário para testar recuperação do servidor
+
+Essa abordagem permite que o sistema:
+- Evite tentativas desnecessárias de conexão
+- Reduza impacto de falhas temporárias
+- Recupere-se automaticamente quando o servidor voltar ao funcionamento
+
+Os testes de falha estão implementados em `tests/test_failure.py`.
