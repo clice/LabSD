@@ -51,8 +51,7 @@ class ClientCore:
             # Conectar ao Name Server
             ns_conn = rpyc.connect(NAME_SERVER_HOST, NAME_SERVER_PORT)
             address = ns_conn.root.lookup(SERVICE_NAME)
-            ns_conn.close()
-
+            
             if not address:
                 return False
 
@@ -61,23 +60,36 @@ class ClientCore:
             self.conn = rpyc.connect(host, port)
             return True
 
-        except Exception:
+        except Exception as e:
+            print(f"Erro ao conectar: {e}")
             self.conn = None
             return False
+        
+        finally:
+            # Garantir que a conexão com o Name Server seja fechada
+            if ns_conn:
+                try:
+                    ns_conn.close()
+                except Exception:
+                    pass
         
         
     def close(self):
         """
-        Fecha conexão RPC.
+        Fecha conexão RPC ativa.
         """
         
         if self.conn:
-            self.conn.close()
-            self.conn = None
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+            finally:
+                self.conn = None           
 
     
     # ==================================================
-    # Método Interno de Retry
+    # Método Interno com Retry
     # ==================================================
 
     def _retry_call(self, method_name, *args):
@@ -99,25 +111,21 @@ class ClientCore:
 
                 return method(*args)
 
-            except Exception:
+            except Exception as e:
+                print(f"Falha na tentativa {retry}. Erro: {e}")
 
                 # Fecha conexão antiga
                 if self.conn:
                     try:
                         self.conn.close()
-                    except:
+                    except Exception:
                         pass
-
-                    self.conn = None
+                    finally:
+                        self.conn = None
 
                 # Realiza as tentativas de conexão com o servidor
                 if retry < self.max_retries:
-                    print(
-                        f"Falha na tentativa {retry}. "
-                        f"Tentando novamente..."
-                    )
                     time.sleep(self.retry_delay)
-
                 else:
                     return {
                         "status": "error",

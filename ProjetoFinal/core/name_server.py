@@ -19,18 +19,18 @@ Ele funciona como um "registro central" de serviços.
 
 import rpyc
 from rpyc.utils.server import ThreadedServer
-import logging
 import threading
-from config import NAME_SERVER_PORT, LOG_FORMAT
+from config import NAME_SERVER_PORT
+from core.color_logger import setup_logger
 
 
 # ======================================================
-# Configuração de Logging
+# Configuração de Logger
 # ======================================================
 
 # Permite monitorar registro e consultas de serviços.
 # Fundamental para depuração e observabilidade do sistema.
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = setup_logger("NameServer")
 
 
 class NameService(rpyc.Service):
@@ -51,7 +51,7 @@ class NameService(rpyc.Service):
             NameService.registry[service_name] = (host, port)
 
         # Logar o registro para monitoramento
-        logging.info(f"Serviço '{service_name}' registrado em {host}:{port}")
+        logger.info(f"Serviço '{service_name}' registrado em {host}:{port}")
 
         return {
 			"status": "success",
@@ -69,11 +69,11 @@ class NameService(rpyc.Service):
         
         if address:
             # Logar a consulta para monitoramento
-            logging.info(f"Consulta ao serviço '{service_name}'.")            
+            logger.info(f"Consulta ao serviço '{service_name}'.")            
             return address
         
         # Logar o registro para monitoramento
-        logging.warning(f"Serviço '{service_name}' não encontrado.")
+        logger.warning(f"Serviço '{service_name}' não encontrado.")
         
         return None
 
@@ -84,9 +84,9 @@ class NameService(rpyc.Service):
 
 if __name__ == "__main__":
     
-    logging.info("==================================")
-    logging.info("Name Server iniciando...")
-    logging.info("==================================")
+    logger.info("==================================")
+    logger.info("Name Server iniciando...")
+    logger.info("==================================")
     
     # Iniciar o servidor de nomes para atender às requisições de registro e consulta
     server = ThreadedServer(

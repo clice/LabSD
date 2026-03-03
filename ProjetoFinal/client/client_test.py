@@ -10,8 +10,6 @@ o servidor distribuído de cinema.
 - Testar compra de ingressos
 """
 
-from wsgiref import headers
-
 from client.client_core import ClientCore
 
 
@@ -22,25 +20,31 @@ from client.client_core import ClientCore
 def main():
     core = ClientCore()
     
+    # Tentar conectar ao servidor
     if not core.connect():
         print("Não foi possível conectar ao servidor.")
         return
 
+    # Loop principal do menu
     while True:
 
         menu()
         option = input("Escolha uma opção: ")
 
         if option == "1":
+            # Solicitar listagem de filmes ao servidor e imprimir resultado
             list_movies(core)
 
         elif option == "2":
+            # Solicitar listagem de sessões para um filme ao servidor e imprimir resultado
             list_screenings_by_movie(core)
 
         elif option == "3":
+            # Solicitar compra de ingressos ao servidor e imprimir resultado
             buy_tickets(core)
 
         elif option == "0":
+            # Encerrar o programa
             print("Encerrando...")
             core.close()
             break
@@ -68,6 +72,10 @@ def print_table(headers, rows):
     headers -> lista com nomes das colunas
     rows -> lista de tuplas ou listas
     """
+    
+    if not rows:
+        print("Nenhum dado encontrado.")
+        return
 
     # Calcular largura máxima de cada coluna
     col_widths = []
@@ -122,16 +130,14 @@ def list_movies(core):
     if result["status"] == "success":
         # A resposta de sucesso deve conter a lista de filmes no campo "data"
         
-        movies = result["data"]
-        
+        movies = result["data"]        
         headers = ["ID", "Título", "Gênero", "Duração (min)"]
         
         print("\n--- Filmes Disponíveis ---")
         print_table(headers, movies)
             
     else:
-        # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"
-        
+        # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"        
         print(result["message"])
 
 def list_screenings_by_movie(core):
@@ -149,17 +155,14 @@ def list_screenings_by_movie(core):
     
     if result["status"] == "success":
         # A resposta de sucesso deve conter a lista de sessões no campo "data"
-
-        sessoes = result["data"]
-        
+        screenings = result["data"]        
         headers = ["Sessão ID", "Horário", "Total", "Disponíveis"]
 
         print("\n--- Sessões Disponíveis ---")
-        print_table(headers, sessoes)
+        print_table(headers, screenings)
             
     else:
-        # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"
-        
+        # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"        
         print(result["message"])
 
 
@@ -168,12 +171,12 @@ def buy_tickets(core):
     Solicita ao servidor a compra de ingressos.
     """
 
-    nome = input("Nome: ")
+    name = input("Nome: ")
     email = input("Email: ")
-    sessao_id = int(input("ID da Sessão: "))
-    quantidade = int(input("Quantidade: "))
+    screening_id = int(input("ID da Sessão: "))
+    quantity = int(input("Quantidade: "))
     
-    result = core.buy_tickets(nome, email, sessao_id, quantidade)
+    result = core.buy_tickets(name, email, screening_id, quantity)
     
     if result["status"] == "success":
         # Em caso de sucesso, a resposta deve conter os detalhes da compra no campo "data"        
@@ -183,8 +186,7 @@ def buy_tickets(core):
         print(f"Ingressos restantes na sessão: {purchase['available_tickets']}")
         
     else:
-        # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"
-        
+        # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"        
         print(result["message"])
 
 

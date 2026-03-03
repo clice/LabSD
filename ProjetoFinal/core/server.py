@@ -11,7 +11,7 @@ na arquitetura N-Camadas do sistema.
 - Concorrência (ThreadedServer)
 - Proteger recursos compartilhados com exclusão mútua
 - Utlizar SQLite como persistência durável
-- Tratar falhas internas com logging estruturado
+- Tratar falhas internas com logger estruturado
 
 O servidor espões métodos que podem ser chamados remotamente
 pelos clientes como se fossem funções locais (transparência de acesso).
@@ -22,22 +22,22 @@ import rpyc
 from rpyc.utils.server import ThreadedServer
 import time
 import threading
-import logging
 
 from core import database
 from config import ( 
     SERVER_HOST, SERVER_PORT, 
-    NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME,
-    LOG_FORMAT
+    NAME_SERVER_HOST, NAME_SERVER_PORT, SERVICE_NAME
 )
+
+from core.color_logger import setup_logger
 
 
 # ======================================================
-# Configuração de Logging
+# Configuração de Logger
 # ======================================================
 
 # Permite rastrear eventos, erros e operações críticas.
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logger = setup_logger("CinemaService")
 
 
 # ======================================================
@@ -77,12 +77,12 @@ class CinemaService(rpyc.Service):
         try:
             # Garantir que apenas uma thread acesse o banco de dados por vez            
             movies = database.list_movies()            
-            logging.info("Filmes listados com sucesso.")            
+            logger.info("Filmes listados com sucesso.")            
             return response("success", "Filmes listados com sucesso.", movies)
         
         except Exception as e:
             # Logar o erro para análise posterior            
-            logging.error(f"Erro ao listar filmes: {e}")            
+            logger.error(f"Erro ao listar filmes: {e}")            
             return response("error", "Erro interno ao listar filmes.")
     
     
@@ -98,12 +98,12 @@ class CinemaService(rpyc.Service):
         try:
             # Garantir que apenas uma thread acesse o banco de dados por vez            
             screenings = database.list_screenings_for_movie(movie_id)            
-            logging.info(f"Sessões listadas para filme_id={movie_id}.")
+            logger.info(f"Sessões listadas para filme_id={movie_id}.")
             return response("success", "Sessões listadas com sucesso.", screenings)
         
         except Exception as e:
             # Logar o erro para análise posterior            
-            logging.error(f"Erro ao listar sessões: {e}")            
+            logger.error(f"Erro ao listar sessões: {e}")            
             return response("error", "Erro interno ao listar sessões.")
             
     
@@ -140,7 +140,7 @@ class CinemaService(rpyc.Service):
                 return response("success", resultado)
 
         except Exception as e:
-            logging.error(f"Erro ao comprar ingresso: {e}")
+            logger.error(f"Erro ao comprar ingresso: {e}")
 
             return response(
                 "error",
@@ -175,20 +175,23 @@ def register_in_name_server():
             # Registrar o serviço com nome, host e porta do servidor principal
             conn.root.register(SERVICE_NAME, SERVER_HOST, SERVER_PORT)            
             
-            logging.info("Servidor registrado no Name Server com sucesso.")
+            logger.info("Servidor registrado no Name Server com sucesso.")
             return True
             
         except Exception as e:
             # Logar o erro para análise posterior
-            logging.warning(f"Tentativa {attempt} de registro falhou. Erro: {e}")
+            logger.warning(f"Tentativa {attempt} de registro falhou. Erro: {e}")
             time.sleep(delay)
             
         finally:
             # Garantir que a conexão seja fechada corretamente
             if conn:
-                conn.close()
+                try:
+                    conn.close()
+                except Exception:
+                    pass
             
-    logging.error(f"Erro ao registrar no Name Server.")
+    logger.error(f"Erro ao registrar no Name Server.")
     return False
         
         
@@ -202,15 +205,15 @@ if __name__ == "__main__":
     registra o serviço no Name Server e inicia o servidor RPC.    
     """
     
-    logging.info("===================================")
-    logging.info("Iniciando Servidor do Cinema...")
-    logging.info("===================================")
+    logger.info("===================================")
+    logger.info("Iniciando Servidor do Cinema...")
+    logger.info("===================================")
     
     try:
         # Inicializar o banco de dados (criar tabelas e inserir dados iniciais)
         
         database.start_db()
-        logging.info("Banco de dados inicializado com sucesso.")
+        logger.info("Banco de dados inicializado com sucesso.")
         
         # Registrar o serviço no Name Server para descoberta pelos clientes
         if not register_in_name_server():
@@ -224,13 +227,13 @@ if __name__ == "__main__":
             reuse_addr=True
         )
         
-        logging.info("Servidor aguardando conexões...")
+        logger.info("Servidor aguardando conexões...")
         server.start()
         
     except KeyboardInterrupt:
         # Logar a interrupção do servidor pelo usuário
-        logging.info("Servidor interrompido pelo usuário.")
+        logger.info("Servidor interrompido pelo usuário.")
         
     except Exception as e:
         # Logar o erro para análise posterior
-        logging.error(f"Falha ao iniciar o servidor: {e}")
+        logger.error(f"Falha ao iniciar o servidor: {e}")
