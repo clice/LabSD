@@ -52,55 +52,66 @@ def start_db():
 
 	with connect() as conn:
 		cursor = conn.cursor()
+		create_tables(cursor)
+		insert_initial_data(cursor)
 
-		# ---------- CREATE TABLE MOVIES ----------
-		cursor.execute("""
-            CREATE TABLE IF NOT EXISTS movies (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				title TEXT NOT NULL,
-				genre TEXT,
-				length INTEGER
-			)
-        """)
 
-		# ---------- CREATE TABLE SCREENINGS ----------
-		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS screenings (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				movie_id INTEGER NOT NULL,
-				time TEXT,
-				total_tickets INTEGER NOT NULL,
-				available_tickets INTEGER NOT NULL,
-				FOREIGN KEY(movie_id) REFERENCES movies(id) ON DELETE CASCADE
+# ======================================================
+# Criar Tabelas dos Bancos de Dados
+# ======================================================
+
+def create_tables(cursor):
+
+	# ---------- CREATE TABLE MOVIES ----------
+	cursor.execute("""
+		CREATE TABLE IF NOT EXISTS movies (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			title TEXT NOT NULL,
+			genre TEXT,
+			length INTEGER
+		)
+	""")
+
+	# ---------- CREATE TABLE SCREENINGS ----------
+	cursor.execute("""
+		CREATE TABLE IF NOT EXISTS screenings (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			movie_id INTEGER NOT NULL,
+			time TEXT,
+			total_tickets INTEGER NOT NULL,
+			available_tickets INTEGER NOT NULL,
+			FOREIGN KEY(movie_id) REFERENCES movies(id) ON DELETE CASCADE
+		)   			
+	""")
+
+	# ---------- CREATE TABLE CLIENTS ----------
+	cursor.execute("""
+		CREATE TABLE IF NOT EXISTS clients (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			email TEXT UNIQUE NOT NULL
 			)   			
-        """)
+	""")
 
-		# ---------- CREATE TABLE CLIENTS ----------
-		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS clients (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				name TEXT NOT NULL,
-				email TEXT UNIQUE NOT NULL
-				)   			
-        """)
-
-		# ---------- CREATE TABLE PURCHASES ----------
-		cursor.execute("""
-			CREATE TABLE IF NOT EXISTS purchases (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				client_id INTEGER NOT NULL,
-				screening_id INTEGER NOT NULL,
-				quantity INTEGER NOT NULL,
-				timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-				FOREIGN KEY(client_id) REFERENCES clients(id) ON DELETE CASCADE,
-				FOREIGN KEY(screening_id) REFERENCES screenings(id) ON DELETE CASCADE
-				)   			
-        """)
-
-		add_initial_data(cursor)
+	# ---------- CREATE TABLE PURCHASES ----------
+	cursor.execute("""
+		CREATE TABLE IF NOT EXISTS purchases (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			client_id INTEGER NOT NULL,
+			screening_id INTEGER NOT NULL,
+			quantity INTEGER NOT NULL,
+			timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(client_id) REFERENCES clients(id) ON DELETE CASCADE,
+			FOREIGN KEY(screening_id) REFERENCES screenings(id) ON DELETE CASCADE
+			)   			
+	""")
 
 
-def add_initial_data(cursor):
+# ======================================================
+# Inserir Dados Iniciais
+# ======================================================
+
+def insert_initial_data(cursor):
     """
     Inserir dados iniciais no banco de dados
     apenas se as tabelas estiverem vazias, para evitar duplicações.
@@ -275,3 +286,58 @@ def buy_tickets(name, email, screening_id, quantity):
 			"message": "Compra realizada com sucesso.",
 			"data": {"available_tickets": total}
 		}
+
+
+# ======================================================
+# Consulta de Compras por Cliente
+# ======================================================
+
+def get_purchases_by_email(email):
+    """
+    Retorna todas as compras realizadas por um cliente,
+    identificado pelo seu e-mail.
+
+    Esta função realiza um JOIN entre:
+    - purchases (compras)
+    - screenings (sessões)
+    - movies (filmes)
+
+    Retorna:
+        Lista contendo:
+        - Título do filme
+        - Horário da sessão
+        - Quantidade comprada
+        - Timestamp da compra
+
+    Caso o cliente não exista ou não possua compras,
+    retorna lista vazia.
+    """
+
+    with connect() as conn:        
+        cursor = conn.cursor()
+        
+        # Primeiro localizar o client epelo e-mail
+        cursor.execute("SELECT iD FROM clients WHERE email=?", (email,))        
+        client = cursor.fetchone()
+        
+        # Se cliente não existir, não há compraa
+        if not client:
+            return []
+        
+        client_id = client[0]
+        
+        # Consulta com JOIN para trazer informações completas
+        cursor.execute("""
+            SELECT
+				m.title,
+				s.time,
+				p.quantity,
+				p.timestamp
+			FROM purchases p
+			JOIN screenings s ON p.screening_id = s.id
+			JOIN movies m ON s.movie_id = m.id
+			WHERE p.client_id = ?
+			ORDER BY p.timestamp DESC
+        """, (client_id,))
+        
+        return cursor.fetchall()

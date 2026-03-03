@@ -182,3 +182,7 @@ class ClientCore:
 
     def buy_tickets(self, nome, email, screening_id, quantity):
         return self._retry_call("buy_tickets", nome, email, screening_id, quantity)
+    
+    
+    def get_purchases_by_email(self, email):        
+        return self._retry_call("get_purchases_by_email", email)

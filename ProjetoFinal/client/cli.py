@@ -1,76 +1,32 @@
 """
-client_test.py
+cli.py
 
-Cliente simples de teste para validar
-o servidor distribuído de cinema.
+Interface de Linha de Comando (CLI) do sistema distribuído de cinema.
 
-- Conectar ao servidor via RPC
-- Testar listagem de filmes
-- Testar listagem de sessões
-- Testar compra de ingressos
+Responsabilidades:
+- Interagir com o usuário via terminal
+- Chamar métodos do ClientCore
+- Exibir dados formatados
+- Não contém lógica de negócio
+- Não contém código SQL
+- Não contém lógica distribuída
+
+Esta camada representa a Camada de Apresentação.
 """
 
 from client.client_core import ClientCore
 
 
 # ======================================================
-# Funções do menu, interação com o usuário e print de resultados
+# Impressão de Tabelas
 # ======================================================
-
-def main():
-    core = ClientCore()
-    
-    # Tentar conectar ao servidor
-    if not core.connect():
-        print("Não foi possível conectar ao servidor.")
-        return
-
-    # Loop principal do menu
-    while True:
-
-        menu()
-        option = input("Escolha uma opção: ")
-
-        if option == "1":
-            # Solicitar listagem de filmes ao servidor e imprimir resultado
-            list_movies(core)
-
-        elif option == "2":
-            # Solicitar listagem de sessões para um filme ao servidor e imprimir resultado
-            list_screenings_by_movie(core)
-
-        elif option == "3":
-            # Solicitar compra de ingressos ao servidor e imprimir resultado
-            buy_tickets(core)
-
-        elif option == "0":
-            # Encerrar o programa
-            print("Encerrando...")
-            core.close()
-            break
-
-        else:
-            print("Opcao inválida.")
-
-
-def menu():
-    """
-    Exibe menu de opções para o usuário.
-    """
-    
-    print("\n===== COMPRA DE INGRESSOS DO CINEMA =====")
-    print("1 - Listar Filmes")
-    print("2 - Listar Sessões")
-    print("3 - Comprar Ingresso")
-    print("0 - Sair")
-
 
 def print_table(headers, rows):
     """
     Imprime dados em formato de tabela organizada no terminal.
 
-    headers -> lista com nomes das colunas
-    rows -> lista de tuplas ou listas
+    headers: lista com nomes das colunas
+    rows: lista de tuplas ou listas
     """
     
     if not rows:
@@ -113,7 +69,7 @@ def print_table(headers, rows):
         print()
 
     print_separator()
-
+    
 
 # ======================================================
 # Funções das opções do menu 
@@ -188,6 +144,88 @@ def buy_tickets(core):
     else:
         # Em caso de erro, a resposta deve conter uma mensagem de erro no campo "message"        
         print(result["message"])
+
+
+def view_purchases(core):
+    """
+    Permite ao cliente visualizar suas compras.
+    """
+    
+    email = input("Digite seu e-mail: ")
+    
+    result = core.get_purchases_by_email(email)
+    
+    if result["status"] == "success":
+        purchases = result["data"]
+        
+        headers = ["Filme", "Horário", "Quantidade", "Data da Compra"]
+        
+        print("\n--- Minhas Compras ---")
+        print_table(headers, purchases)
+        
+    else:
+        print(result["message"])
+    
+
+# ======================================================
+# Funções do menu, interação com o usuário e print de resultados
+# ======================================================
+
+def menu():
+    """
+    Exibe menu de opções para o usuário.
+    """
+    
+    print("\n===== COMPRA DE INGRESSOS DO CINEMA =====")
+    print("1 - Listar Filmes")
+    print("2 - Listar Sessões")
+    print("3 - Comprar Ingresso")
+    print("4 - Minhas Compras")
+    print("0 - Sair")
+    
+    
+def main():
+    """
+    Função principal do .
+    """
+    
+    core = ClientCore()
+    
+    # Tentar conectar ao servidor
+    if not core.connect():
+        print("Não foi possível conectar ao servidor.")
+        return
+
+    # Loop principal do menu
+    while True:
+
+        menu()
+        option = input("Escolha uma opção: ")
+
+        if option == "1":
+            # Solicitar listagem de filmes ao servidor e imprimir resultado
+            list_movies(core)
+
+        elif option == "2":
+            # Solicitar listagem de sessões para um filme ao servidor e imprimir resultado
+            list_screenings_by_movie(core)
+
+        elif option == "3":
+            # Solicitar compra de ingressos ao servidor e imprimir resultado
+            buy_tickets(core)
+            
+        elif option == "4":
+            # Visualizar ingressos comprados
+            view_purchases(core)
+
+        elif option == "0":
+            # Encerrar o programa
+            print("Encerrando...")
+            core.close()
+            break
+
+        else:
+            print("Opcao inválida.")
 
 
 # ======================================================

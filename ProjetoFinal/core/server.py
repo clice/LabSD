@@ -146,11 +146,27 @@ class CinemaService(rpyc.Service):
         except Exception as e:
             logger.error(f"Erro ao comprar ingresso: {e}")
 
-            return response(
-                "error",
-                "Erro interno ao realizar compra."
-            )
+            return response("error", "Erro interno ao realizar compra.")
             
+    
+    def exposed_get_purchases_by_email(self, email):
+        """
+        Método RPC para consultar compras de um cliente.
+        Valida entrada e retorna compras associadas ao e-mail.
+        """
+        
+        # Validação básica
+        if not isinstance(email, str) or not email.strip():
+            return response("error", "E-mail inválido.")
+        
+        try:
+            purchases = database.get_purchases_by_email(email)
+            
+            return response("success", "Compras recuperadas com sucesso.", purchases)
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar compras: {e}")
+            return response("error", "Erro interno ao buscar compras")
 
 # ======================================================
 # Registro no Name Server
